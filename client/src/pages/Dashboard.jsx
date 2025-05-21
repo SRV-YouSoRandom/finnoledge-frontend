@@ -17,7 +17,7 @@ function Dashboard({ user }) {
         
         // Get wallet address from user for balance check
         // For demo, we use hardcoded "bob" since that's what the sample uses
-        const address = "erpbobtq4tgz5ygtn4ljw3vhepnmjl9y90hjr2ng4"; // Replace with actual address format
+        const address = "erp1kt26fpwed6ve2alsm9kccuev9g2vzywjup8xq0"; // Replace with actual address format
         
         const [balanceRes, groupsRes, ledgersRes, entriesRes] = await Promise.all([
           api.fetchBalance(address),
