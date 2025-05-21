@@ -4,19 +4,21 @@
   height: 100vh;
   background-color: var(--sidebar-bg);
   color: var(--sidebar-text);
-  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.15);
   overflow-y: auto;
+  z-index: 1000;
 }
 
 .sidebar-header {
-  padding: 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 24px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .sidebar-header h2 {
   margin: 0;
-  font-size: 20px;
-  font-weight: 500;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
 }
 
 .sidebar-nav ul {
@@ -26,31 +28,44 @@
 }
 
 .sidebar-section {
-  padding: 16px 20px 8px;
+  padding: 18px 20px 8px;
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 1px;
-  opacity: 0.7;
+  opacity: 0.8;
+  font-weight: 600;
 }
 
 .sidebar-nav a {
   display: flex;
   align-items: center;
-  padding: 12px 20px;
+  padding: 14px 20px;
   color: var(--sidebar-text);
   text-decoration: none;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s, border-left-color 0.2s;
+  border-left: 3px solid transparent;
 }
 
 .sidebar-nav a:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.15);
+  border-left-color: rgba(255, 255, 255, 0.5);
 }
 
 .sidebar-nav a.active {
   background-color: rgba(255, 255, 255, 0.2);
   border-left: 3px solid white;
+  font-weight: 500;
 }
 
 .sidebar-nav a span {
   margin-left: 12px;
+}
+
+/* Add a subtle hover effect */
+.sidebar-nav svg {
+  transition: transform 0.2s;
+}
+
+.sidebar-nav a:hover svg {
+  transform: scale(1.1);
 }
