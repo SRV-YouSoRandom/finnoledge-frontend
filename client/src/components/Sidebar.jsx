@@ -5,7 +5,9 @@ import {
   IconList, 
   IconNotes, 
   IconCoin, 
-  IconPlus 
+  IconPlus,
+  IconReport,
+  IconFileText
 } from '@tabler/icons-react';
 import './Sidebar.css';
 
@@ -49,6 +51,20 @@ function Sidebar() {
             <NavLink to="/send-and-record" className={({ isActive }) => isActive ? 'active' : ''}>
               <IconCoin size={20} />
               <span>Send & Record</span>
+            </NavLink>
+          </li>
+          
+          <li className="sidebar-section">Reports</li>
+          <li>
+            <NavLink to="/balance-sheet" className={({ isActive }) => isActive ? 'active' : ''}>
+              <IconReport size={20} />
+              <span>Balance Sheet</span>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink to="/profit-and-loss" className={({ isActive }) => isActive ? 'active' : ''}>
+              <IconFileText size={20} />
+              <span>P&L Statement</span>
             </NavLink>
           </li>
           

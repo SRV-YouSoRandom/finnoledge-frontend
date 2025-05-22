@@ -12,6 +12,8 @@ import JournalEntryList from './pages/JournalEntries/JournalEntryList';
 import JournalEntryDetails from './pages/JournalEntries/JournalEntryDetails';
 import CreateJournalEntry from './pages/JournalEntries/CreateJournalEntry';
 import SendAndRecord from './pages/Transactions/SendAndRecord';
+import BalanceSheet from './pages/Reports/BalanceSheet';
+import ProfitAndLoss from './pages/Reports/ProfitAndLoss';
 import './App.css';
 
 function App() {
@@ -42,6 +44,10 @@ function App() {
             
             {/* Transaction Routes */}
             <Route path="/send-and-record" element={<SendAndRecord user={walletAddress} />} />
+
+            {/* Reports */}
+            <Route path="/balance-sheet" element={<BalanceSheet />} />
+            <Route path="/profit-and-loss" element={<ProfitAndLoss />} />
           </Routes>
         </main>
       </div>
