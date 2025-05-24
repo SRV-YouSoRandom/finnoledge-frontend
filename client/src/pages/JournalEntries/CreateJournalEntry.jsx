@@ -43,10 +43,20 @@ function CreateJournalEntry({ user }) {
 
   const handleTransactionChange = (index, field, value) => {
     const updatedTransactions = [...formData.transactions];
-    updatedTransactions[index] = {
-      ...updatedTransactions[index],
-      [field]: field === 'amount' ? value.replace(/[^0-9]/g, '') : value
-    };
+    
+    if (field === 'amount') {
+      // Only allow numbers and ensure it's a valid number
+      const numericValue = value.replace(/[^0-9]/g, '');
+      updatedTransactions[index] = {
+        ...updatedTransactions[index],
+        [field]: numericValue
+      };
+    } else {
+      updatedTransactions[index] = {
+        ...updatedTransactions[index],
+        [field]: value
+      };
+    }
     
     setFormData(prev => ({
       ...prev,
@@ -90,8 +100,8 @@ function CreateJournalEntry({ user }) {
         setError('All transactions must have a ledger account selected');
         return false;
       }
-      if (!transaction.amount) {
-        setError('All transactions must have an amount');
+      if (!transaction.amount || transaction.amount === '0') {
+        setError('All transactions must have a valid amount greater than 0');
         return false;
       }
     }
@@ -99,11 +109,11 @@ function CreateJournalEntry({ user }) {
     // Ensure debits equal credits (balanced entry)
     const totalDebits = formData.transactions
       .filter(t => t.entryType === 'Debit')
-      .reduce((sum, t) => sum + parseInt(t.amount || 0), 0);
+      .reduce((sum, t) => sum + parseInt(t.amount || 0, 10), 0);
       
     const totalCredits = formData.transactions
       .filter(t => t.entryType === 'Credit')
-      .reduce((sum, t) => sum + parseInt(t.amount || 0), 0);
+      .reduce((sum, t) => sum + parseInt(t.amount || 0, 10), 0);
       
     if (totalDebits !== totalCredits) {
       setError(`Journal entry is not balanced. Debits (${totalDebits}) must equal Credits (${totalCredits})`);
@@ -124,8 +134,17 @@ function CreateJournalEntry({ user }) {
     setSubmitting(true);
     
     try {
-      // Convert transactions array to JSON string for CLI
-      const transactionsJson = JSON.stringify(formData.transactions);
+      // Prepare transactions with proper formatting
+      const processedTransactions = formData.transactions.map(transaction => ({
+        ledgerName: transaction.ledgerName,
+        entryType: transaction.entryType,
+        amount: parseInt(transaction.amount, 10) // Ensure it's a number
+      }));
+      
+      // Convert transactions array to JSON string for backend
+      const transactionsJson = JSON.stringify(processedTransactions);
+      
+      console.log('Sending transactions:', transactionsJson); // Debug log
       
       await cli.createJournalEntry({
         description: formData.description,

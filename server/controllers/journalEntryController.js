@@ -14,9 +14,34 @@ const createJournalEntry = async (req, res) => {
       });
     }
     
-    // Construct the CLI command
-    // Example: rollkit tx ledger create-journal-entry "Cash withdrawal" '[{"ledgerName":"Cash", "entryType":"Debit", "amount":500}]' --from bob --chain-id erprollup -y --fees 5stake
-    const command = `rollkit tx ledger create-journal-entry "${description}" '${transactionsJson}' --from ${user} --chain-id erprollup -y --fees 5stake`;
+    // Parse the JSON string to validate and potentially modify it
+    let transactions;
+    try {
+      transactions = JSON.parse(transactionsJson);
+      
+      // Ensure amounts are numbers, not strings
+      transactions = transactions.map(t => ({
+        ...t,
+        amount: parseInt(t.amount, 10)
+      }));
+      
+    } catch (parseError) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid transactions format'
+      });
+    }
+    
+    // Convert back to JSON string and properly escape for shell
+    const cleanTransactionsJson = JSON.stringify(transactions);
+    
+    // Use double quotes and escape internal quotes
+    const escapedTransactionsJson = cleanTransactionsJson.replace(/"/g, '\\"');
+    
+    // Construct the CLI command with proper escaping
+    const command = `rollkit tx ledger create-journal-entry "${description}" "${escapedTransactionsJson}" --from ${user} --chain-id erprollup -y --fees 5stake`;
+    
+    console.log('Executing command:', command); // Debug log
     
     // Execute the command
     const result = await executeCommand(command);
@@ -59,7 +84,6 @@ const sendAndRecord = async (req, res) => {
     }
     
     // Construct the CLI command
-    // Example: rollkit tx ledger send-and-record erp1... 1000 stake "Salaries Expense" "Bank Account - XYZ" "Monthly salary payment" --from bob --chain-id erprollup -y --fees 5stake
     const command = `rollkit tx ledger send-and-record ${toAddress} ${amount} ${denom} "${debitLedgerName}" "${creditLedgerName}" "${description}" --from ${user} --chain-id erprollup -y --fees 5stake`;
     
     // Execute the command
