@@ -53,7 +53,26 @@ function BalanceSheet() {
   }, []);
 
   const calculateLedgerBalance = (ledger, journalEntries) => {
+    // Start with opening balance
     let balance = parseFloat(ledger.openingBalance) || 0;
+    
+    // Determine the normal balance side for this account type
+    const normalDebitAccounts = ['Asset', 'Expense'];
+    const normalCreditAccounts = ['Liability', 'Equity', 'Revenue'];
+    
+    // If opening balance type is specified, apply it correctly
+    if (ledger.openingBalanceType) {
+      if (ledger.openingBalanceType === 'Credit' && normalDebitAccounts.includes(ledger.groupType)) {
+        balance = -balance; // Credit opening balance for normally debit account
+      } else if (ledger.openingBalanceType === 'Debit' && normalCreditAccounts.includes(ledger.groupType)) {
+        balance = -balance; // Debit opening balance for normally credit account
+      }
+    } else {
+      // If no opening balance type specified, assume normal balance for the account type
+      if (normalCreditAccounts.includes(ledger.groupType)) {
+        balance = -balance; // Treat as credit balance for liability/equity accounts
+      }
+    }
     
     // Calculate balance from journal entries
     journalEntries.forEach(entry => {
@@ -65,27 +84,26 @@ function BalanceSheet() {
         transactions.forEach(transaction => {
           if (transaction.ledgerName === ledger.name) {
             const amount = parseFloat(transaction.amount) || 0;
+            
             if (transaction.entryType === 'Debit') {
-              // For assets: Debit increases, for liabilities/equity: Debit decreases
-              if (ledger.groupType === 'Asset') {
-                balance += amount;
-              } else {
-                balance -= amount;
-              }
+              balance += amount; // Debit always increases the balance
             } else if (transaction.entryType === 'Credit') {
-              // For assets: Credit decreases, for liabilities/equity: Credit increases
-              if (ledger.groupType === 'Asset') {
-                balance -= amount;
-              } else {
-                balance += amount;
-              }
+              balance -= amount; // Credit always decreases the balance
             }
           }
         });
       }
     });
 
-    return balance;
+    // For balance sheet presentation, we need the absolute value
+    // but we need to know if this account has a normal balance
+    const hasNormalBalance = normalDebitAccounts.includes(ledger.groupType) 
+      ? balance >= 0 
+      : balance <= 0;
+    
+    // Return the balance for balance sheet (always positive for presentation)
+    // If account doesn't have normal balance, it might need special handling
+    return hasNormalBalance ? Math.abs(balance) : Math.abs(balance);
   };
 
   const calculateBalanceSheetData = (groups, ledgers, journalEntries) => {
@@ -99,10 +117,15 @@ function BalanceSheet() {
     // Group ledgers by their group names
     const ledgersByGroup = {};
     ledgers.forEach(ledger => {
-      if (!ledgersByGroup[ledger.groupName]) {
-        ledgersByGroup[ledger.groupName] = [];
+      // Find the group to get the group type
+      const group = groups.find(g => g.name === ledger.groupName);
+      if (group) {
+        ledger.groupType = group.groupType; // Ensure ledger has group type
+        if (!ledgersByGroup[ledger.groupName]) {
+          ledgersByGroup[ledger.groupName] = [];
+        }
+        ledgersByGroup[ledger.groupName].push(ledger);
       }
-      ledgersByGroup[ledger.groupName].push(ledger);
     });
 
     // Process each group
@@ -119,26 +142,32 @@ function BalanceSheet() {
 
       groupLedgers.forEach(ledger => {
         const balance = calculateLedgerBalance(ledger, journalEntries);
-        groupTotal += balance;
-
-        groupData.ledgers.push({
-          name: ledger.name,
-          balance: balance
-        });
+        
+        // Only include ledgers with non-zero balances in balance sheet
+        if (balance !== 0) {
+          groupTotal += balance;
+          groupData.ledgers.push({
+            name: ledger.name,
+            balance: balance
+          });
+        }
       });
 
-      groupData.total = groupTotal;
+      // Only include groups with non-zero totals
+      if (groupTotal !== 0) {
+        groupData.total = groupTotal;
 
-      // Categorize by group type
-      if (group.groupType === 'Asset') {
-        assets.push(groupData);
-        totalAssets += groupTotal;
-      } else if (group.groupType === 'Liability') {
-        liabilities.push(groupData);
-        totalLiabilities += groupTotal;
-      } else if (group.groupType === 'Equity') {
-        equity.push(groupData);
-        totalEquity += groupTotal;
+        // Categorize by group type
+        if (group.groupType === 'Asset') {
+          assets.push(groupData);
+          totalAssets += groupTotal;
+        } else if (group.groupType === 'Liability') {
+          liabilities.push(groupData);
+          totalLiabilities += groupTotal;
+        } else if (group.groupType === 'Equity') {
+          equity.push(groupData);
+          totalEquity += groupTotal;
+        }
       }
     });
 
@@ -158,10 +187,11 @@ function BalanceSheet() {
     return new Intl.NumberFormat('en-US', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
-    }).format(Math.abs(amount));
+    }).format(amount); // Remove Math.abs() - amount should already be positive
   };
 
-  const isBalanced = Math.abs(reportData.totals.totalAssets - (reportData.totals.totalLiabilities + reportData.totals.totalEquity)) < 0.01;
+  const balanceDifference = reportData.totals.totalAssets - (reportData.totals.totalLiabilities + reportData.totals.totalEquity);
+  const isBalanced = Math.abs(balanceDifference) < 0.01;
 
   const handlePrint = () => {
     window.print();
@@ -197,7 +227,7 @@ function BalanceSheet() {
                   </tr>
                   {group.ledgers.map((ledger, ledgerIndex) => (
                     <tr key={ledgerIndex} className="ledger-row">
-                      <td>{ledger.name}</td>
+                      <td className="ledger-indent">{ledger.name}</td>
                       <td className="amount">{formatAmount(ledger.balance)}</td>
                     </tr>
                   ))}
@@ -229,7 +259,7 @@ function BalanceSheet() {
                   </tr>
                   {group.ledgers.map((ledger, ledgerIndex) => (
                     <tr key={ledgerIndex} className="ledger-row">
-                      <td>{ledger.name}</td>
+                      <td className="ledger-indent">{ledger.name}</td>
                       <td className="amount">{formatAmount(ledger.balance)}</td>
                     </tr>
                   ))}
@@ -261,7 +291,7 @@ function BalanceSheet() {
                   </tr>
                   {group.ledgers.map((ledger, ledgerIndex) => (
                     <tr key={ledgerIndex} className="ledger-row">
-                      <td>{ledger.name}</td>
+                      <td className="ledger-indent">{ledger.name}</td>
                       <td className="amount">{formatAmount(ledger.balance)}</td>
                     </tr>
                   ))}
@@ -291,7 +321,7 @@ function BalanceSheet() {
         <div className={`balance-verification ${isBalanced ? 'balanced' : 'unbalanced'}`}>
           {isBalanced 
             ? '✓ Balance Sheet is balanced' 
-            : `⚠ Balance Sheet is not balanced (Difference: ${formatAmount(reportData.totals.totalAssets - (reportData.totals.totalLiabilities + reportData.totals.totalEquity))})`
+            : `⚠ Balance Sheet is not balanced (Difference: ${formatAmount(Math.abs(balanceDifference))})`
           }
         </div>
       </div>

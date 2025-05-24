@@ -175,6 +175,10 @@
   background-color: var(--primary-dark);
 }
 
+.ledger-indent {
+  padding-left: 20px;
+}
+
 @media print {
   .report-actions {
     display: none;
