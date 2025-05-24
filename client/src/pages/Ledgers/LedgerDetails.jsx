@@ -45,6 +45,57 @@ function LedgerDetails() {
     fetchLedgerDetails();
   }, [id]);
 
+  // Calculate totals and closing balance
+  const calculateBalances = () => {
+    if (!ledger || !relatedEntries.length) {
+      const openingBalance = parseFloat(ledger?.openingBalance || 0);
+      return {
+        totalDebits: 0,
+        totalCredits: 0,
+        closingBalance: openingBalance,
+        openingBalance: openingBalance
+      };
+    }
+
+    let totalDebits = 0;
+    let totalCredits = 0;
+
+    // Calculate debits and credits from journal entries
+    relatedEntries.forEach(entry => {
+      entry.transactions.forEach(transaction => {
+        if (transaction.ledgerName === ledger.name) {
+          const amount = parseFloat(transaction.amount || 0);
+          if (transaction.entryType === 'Debit') {
+            totalDebits += amount;
+          } else if (transaction.entryType === 'Credit') {
+            totalCredits += amount;
+          }
+        }
+      });
+    });
+
+    const openingBalance = parseFloat(ledger.openingBalance || 0);
+    const openingBalanceType = ledger.openingBalanceType || 'Debit';
+
+    // Calculate closing balance based on accounting principles
+    let closingBalance;
+    
+    if (openingBalanceType === 'Debit') {
+      // For debit balance accounts: Closing = Opening + Debits - Credits
+      closingBalance = openingBalance + totalDebits - totalCredits;
+    } else {
+      // For credit balance accounts: Closing = Opening + Credits - Debits
+      closingBalance = openingBalance + totalCredits - totalDebits;
+    }
+
+    return {
+      totalDebits,
+      totalCredits,
+      closingBalance,
+      openingBalance
+    };
+  };
+
   if (loading) {
     return <div className="loading">Loading ledger details...</div>;
   }
@@ -56,6 +107,8 @@ function LedgerDetails() {
   if (!ledger) {
     return <div className="not-found">Ledger not found</div>;
   }
+
+  const balances = calculateBalances();
 
   return (
     <div className="ledger-details">
@@ -107,48 +160,99 @@ function LedgerDetails() {
           <h2>Journal Entries</h2>
           
           {relatedEntries.length > 0 ? (
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Description</th>
-                  <th>Entry Type</th>
-                  <th>Amount</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {relatedEntries.map(entry => {
-                  // Find the transaction in this entry that references this ledger
-                  const transaction = entry.transactions.find(tx => 
-                    tx.ledgerName === ledger.name
-                  );
-                  
-                  return (
-                    <tr key={entry.id}>
-                      <td>{entry.id}</td>
-                      <td>{entry.description}</td>
-                      <td>{transaction ? transaction.entryType : 'N/A'}</td>
-                      <td>{transaction ? transaction.amount : 'N/A'}</td>
-                      <td>
-                        <Link to={`/journal-entries/${entry.id}`} className="button button-secondary">
-                          View
-                        </Link>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          ) : (
-            <div className="empty-state">
-              No journal entries found for this ledger.
-              <div>
-                <Link to="/create-journal-entry" className="button">
-                  Create Journal Entry
-                </Link>
+            <>
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Description</th>
+                    <th>Entry Type</th>
+                    <th>Debit Amount</th>
+                    <th>Credit Amount</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {relatedEntries.map(entry => {
+                    // Find the transaction in this entry that references this ledger
+                    const transaction = entry.transactions.find(tx => 
+                      tx.ledgerName === ledger.name
+                    );
+                    
+                    const amount = parseFloat(transaction?.amount || 0);
+                    const isDebit = transaction?.entryType === 'Debit';
+                    
+                    return (
+                      <tr key={entry.id}>
+                        <td>{entry.id}</td>
+                        <td>{entry.description}</td>
+                        <td>{transaction ? transaction.entryType : 'N/A'}</td>
+                        <td>{isDebit ? amount.toFixed(2) : '-'}</td>
+                        <td>{!isDebit && transaction ? amount.toFixed(2) : '-'}</td>
+                        <td>
+                          <Link to={`/journal-entries/${entry.id}`} className="button button-secondary">
+                            View
+                          </Link>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+                <tfoot>
+                  <tr className="summary-row">
+                    <td colSpan="3"><strong>Totals:</strong></td>
+                    <td><strong>{balances.totalDebits.toFixed(2)}</strong></td>
+                    <td><strong>{balances.totalCredits.toFixed(2)}</strong></td>
+                    <td></td>
+                  </tr>
+                </tfoot>
+              </table>
+              
+              <div className="balance-summary">
+                <div className="balance-item">
+                  <span className="balance-label">Opening Balance ({ledger.openingBalanceType || 'Debit'}):</span>
+                  <span className="balance-value">{balances.openingBalance.toFixed(2)}</span>
+                </div>
+                <div className="balance-item">
+                  <span className="balance-label">Total Debits:</span>
+                  <span className="balance-value">{balances.totalDebits.toFixed(2)}</span>
+                </div>
+                <div className="balance-item">
+                  <span className="balance-label">Total Credits:</span>
+                  <span className="balance-value">{balances.totalCredits.toFixed(2)}</span>
+                </div>
+                <div className="balance-item closing-balance">
+                  <span className="balance-label">Closing Balance:</span>
+                  <span className="balance-value">
+                    {balances.closingBalance.toFixed(2)} 
+                    {balances.closingBalance >= 0 ? 
+                      ` (${ledger.openingBalanceType || 'Debit'})` : 
+                      ` (${ledger.openingBalanceType === 'Debit' ? 'Credit' : 'Debit'})`
+                    }
+                  </span>
+                </div>
               </div>
-            </div>
+            </>
+          ) : (
+            <>
+              <div className="empty-state">
+                No journal entries found for this ledger.
+                <div>
+                  <Link to="/create-journal-entry" className="button">
+                    Create Journal Entry
+                  </Link>
+                </div>
+              </div>
+              
+              <div className="balance-summary">
+                <div className="balance-item closing-balance">
+                  <span className="balance-label">Current Balance:</span>
+                  <span className="balance-value">
+                    {balances.openingBalance.toFixed(2)} ({ledger.openingBalanceType || 'Debit'})
+                  </span>
+                </div>
+              </div>
+            </>
           )}
         </div>
       </div>
