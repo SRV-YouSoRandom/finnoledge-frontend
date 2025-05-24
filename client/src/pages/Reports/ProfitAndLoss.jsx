@@ -33,6 +33,12 @@ function ProfitAndLoss() {
         const fetchedLedgers = ledgersResponse.data.ErpLedger || [];
         const fetchedJournalEntries = journalEntriesResponse.data.JournalEntry || [];
 
+        console.log('Fetched data:', {
+          groups: fetchedGroups,
+          ledgers: fetchedLedgers,
+          journalEntries: fetchedJournalEntries
+        });
+
         setGroups(fetchedGroups);
         setLedgers(fetchedLedgers);
         setJournalEntries(fetchedJournalEntries);
@@ -51,39 +57,54 @@ function ProfitAndLoss() {
     fetchData();
   }, []);
 
-  const calculateLedgerBalance = (ledger, journalEntries) => {
+  const calculateLedgerBalance = (ledger, journalEntries, groupType) => {
     let balance = parseFloat(ledger.openingBalance) || 0;
+    
+    console.log(`Calculating balance for ledger: ${ledger.name}, opening balance: ${balance}, group type: ${groupType}`);
     
     // Calculate balance from journal entries
     journalEntries.forEach(entry => {
       if (entry.transactions) {
-        const transactions = typeof entry.transactions === 'string' 
-          ? JSON.parse(entry.transactions) 
-          : entry.transactions;
+        let transactions;
+        try {
+          transactions = typeof entry.transactions === 'string' 
+            ? JSON.parse(entry.transactions) 
+            : entry.transactions;
+        } catch (e) {
+          console.error('Error parsing transactions:', e);
+          return;
+        }
         
-        transactions.forEach(transaction => {
-          if (transaction.ledgerName === ledger.name) {
-            const amount = parseFloat(transaction.amount) || 0;
-            if (transaction.entryType === 'Debit') {
-              // For revenue: Debit decreases, for expenses: Debit increases
-              if (ledger.groupType === 'Revenue') {
-                balance -= amount;
-              } else if (ledger.groupType === 'Expense') {
-                balance += amount;
-              }
-            } else if (transaction.entryType === 'Credit') {
-              // For revenue: Credit increases, for expenses: Credit decreases
-              if (ledger.groupType === 'Revenue') {
-                balance += amount;
-              } else if (ledger.groupType === 'Expense') {
-                balance -= amount;
+        if (Array.isArray(transactions)) {
+          transactions.forEach(transaction => {
+            if (transaction.ledgerName === ledger.name) {
+              const amount = parseFloat(transaction.amount) || 0;
+              console.log(`Transaction for ${ledger.name}: ${transaction.entryType} ${amount}`);
+              
+              if (transaction.entryType === 'Debit') {
+                if (groupType === 'Revenue') {
+                  // Revenue accounts: Debit decreases balance
+                  balance -= amount;
+                } else if (groupType === 'Expense') {
+                  // Expense accounts: Debit increases balance
+                  balance += amount;
+                }
+              } else if (transaction.entryType === 'Credit') {
+                if (groupType === 'Revenue') {
+                  // Revenue accounts: Credit increases balance
+                  balance += amount;
+                } else if (groupType === 'Expense') {
+                  // Expense accounts: Credit decreases balance
+                  balance -= amount;
+                }
               }
             }
-          }
-        });
+          });
+        }
       }
     });
 
+    console.log(`Final balance for ${ledger.name}: ${balance}`);
     return balance;
   };
 
@@ -92,6 +113,14 @@ function ProfitAndLoss() {
     const expenses = [];
     let totalRevenue = 0;
     let totalExpenses = 0;
+
+    console.log('Starting P&L calculation...');
+
+    // Create a map of groups by name for easy lookup
+    const groupMap = {};
+    groups.forEach(group => {
+      groupMap[group.name] = group;
+    });
 
     // Group ledgers by their group names
     const ledgersByGroup = {};
@@ -102,9 +131,17 @@ function ProfitAndLoss() {
       ledgersByGroup[ledger.groupName].push(ledger);
     });
 
-    // Process each group
-    groups.forEach(group => {
-      const groupLedgers = ledgersByGroup[group.name] || [];
+    console.log('Ledgers by group:', ledgersByGroup);
+
+    // Process each group that has ledgers
+    Object.keys(ledgersByGroup).forEach(groupName => {
+      const group = groupMap[groupName];
+      if (!group) {
+        console.log(`Group ${groupName} not found in groups list`);
+        return;
+      }
+
+      const groupLedgers = ledgersByGroup[groupName];
       let groupTotal = 0;
 
       const groupData = {
@@ -115,7 +152,7 @@ function ProfitAndLoss() {
       };
 
       groupLedgers.forEach(ledger => {
-        const balance = calculateLedgerBalance(ledger, journalEntries);
+        const balance = calculateLedgerBalance(ledger, journalEntries, group.groupType);
         groupTotal += balance;
 
         groupData.ledgers.push({
@@ -126,17 +163,27 @@ function ProfitAndLoss() {
 
       groupData.total = groupTotal;
 
+      console.log(`Group ${group.name} (${group.groupType}): total = ${groupTotal}`);
+
       // Categorize by group type (only Revenue and Expense for P&L)
       if (group.groupType === 'Revenue') {
         revenue.push(groupData);
         totalRevenue += groupTotal;
       } else if (group.groupType === 'Expense') {
         expenses.push(groupData);
-        totalExpenses += groupTotal;
+        totalExpenses += Math.abs(groupTotal); // Use absolute value for expenses
       }
     });
 
     const netIncome = totalRevenue - totalExpenses;
+
+    console.log('P&L Calculation Results:', {
+      totalRevenue,
+      totalExpenses,
+      netIncome,
+      revenue,
+      expenses
+    });
 
     return {
       revenue,
@@ -192,7 +239,7 @@ function ProfitAndLoss() {
                       </tr>
                       {group.ledgers.map((ledger, ledgerIndex) => (
                         <tr key={ledgerIndex} className="ledger-row">
-                          <td>{ledger.name}</td>
+                          <td style={{ paddingLeft: '20px' }}>{ledger.name}</td>
                           <td className="amount">{formatAmount(ledger.balance)}</td>
                         </tr>
                       ))}
@@ -232,8 +279,8 @@ function ProfitAndLoss() {
                       </tr>
                       {group.ledgers.map((ledger, ledgerIndex) => (
                         <tr key={ledgerIndex} className="ledger-row">
-                          <td>{ledger.name}</td>
-                          <td className="amount">{formatAmount(ledger.balance)}</td>
+                          <td style={{ paddingLeft: '20px' }}>{ledger.name}</td>
+                          <td className="amount">{formatAmount(Math.abs(ledger.balance))}</td>
                         </tr>
                       ))}
                     </React.Fragment>
