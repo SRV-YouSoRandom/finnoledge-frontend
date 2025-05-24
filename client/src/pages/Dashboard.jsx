@@ -178,7 +178,7 @@ function Dashboard({ user }) {
             <div className="balance-display">{formatBalance()}</div>
           </div>
           
-          <div className="card">
+          {/* <div className="card">
             <div className="card-header">
               <h2>
                 <IconTrendingUp size={20} />
@@ -186,7 +186,7 @@ function Dashboard({ user }) {
               </h2>
             </div>
             <div className="balance-display">{formatCurrency(analytics.totalsByType.assets)}</div>
-          </div>
+          </div> */}
           
           <div className="card">
             <div className="card-header">
