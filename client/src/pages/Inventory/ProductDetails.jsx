@@ -34,10 +34,20 @@ function ProductDetails() {
         // Fetch all stock movements and filter by product name
         try {
           const movementsResponse = await api.fetchStockMovements();
-          // Fix: Use lowercase 'stockMovementLog' from API response
-          const allMovements = movementsResponse.data.stockMovementLog || [];
+          console.log('Movements response:', movementsResponse.data); // Debug log
+          
+          // Handle different possible response structures
+          let allMovements = [];
+          if (movementsResponse.data.StockMovementLog) {
+            allMovements = movementsResponse.data.StockMovementLog;
+          } else if (movementsResponse.data.stock_movement_log) {
+            allMovements = movementsResponse.data.stock_movement_log;
+          } else if (Array.isArray(movementsResponse.data)) {
+            allMovements = movementsResponse.data;
+          }
+          
           const productMovements = allMovements.filter(movement => 
-            movement.productName === productData.name
+            movement.productName === productData.name || movement.product_name === productData.name
           );
           setStockMovements(productMovements);
         } catch (movementsError) {
