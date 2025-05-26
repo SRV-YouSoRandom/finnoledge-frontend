@@ -30,7 +30,11 @@ const api = {
   fetchStockEntries: () => axios.get(`${API_URL}/erprollup/inventory/stock_entry`),
   fetchStockEntry: (productName) => axios.get(`${API_URL}/erprollup/inventory/stock_entry/${productName}`),
   
-  // Inventory - Stock Movement Logs
+  // Inventory - Stock Movement Logs (FIXED: was fetchStockMovements)
+  fetchStockMovements: () => axios.get(`${API_URL}/erprollup/inventory/stock_movement_log`),
+  fetchStockMovement: (id) => axios.get(`${API_URL}/erprollup/inventory/stock_movement_log/${id}`),
+  
+  // Keep the original method names for backward compatibility
   fetchStockMovementLogs: () => axios.get(`${API_URL}/erprollup/inventory/stock_movement_log`),
   fetchStockMovementLog: (id) => axios.get(`${API_URL}/erprollup/inventory/stock_movement_log/${id}`),
 };
