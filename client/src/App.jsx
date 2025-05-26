@@ -18,6 +18,7 @@ import CreateProduct from './pages/Inventory/CreateProduct';
 import StockMovementList from './pages/Inventory/StockMovementList';
 import RecordStockMovement from './pages/Inventory/RecordStockMovement';
 import StockOverview from './pages/Inventory/StockOverview';
+import StockMovementDetails from './pages/Inventory/StockMovementDetails';
 import BalanceSheet from './pages/Reports/BalanceSheet';
 import ProfitAndLoss from './pages/Reports/ProfitAndLoss';
 import './App.css';
@@ -58,6 +59,7 @@ function App() {
             <Route path="/create-product" element={<CreateProduct user={walletAddress} />} />
             <Route path="/stock-movements" element={<StockMovementList />} />
             <Route path="/record-stock-movement" element={<RecordStockMovement user={walletAddress} />} />
+            <Route path="/stock-movements/:id" element={<StockMovementDetails />} />
 
             {/* Reports */}
             <Route path="/balance-sheet" element={<BalanceSheet />} />
