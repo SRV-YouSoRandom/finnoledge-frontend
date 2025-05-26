@@ -172,7 +172,7 @@ function SendAndRecord({ user }) {
           </div>
           
           <div className="form-group">
-            <label htmlFor="debitLedgerName" className="form-label">Debit Account (Increases)</label>
+            <label htmlFor="debitLedgerName" className="form-label">From</label>
             <select
               id="debitLedgerName"
               name="debitLedgerName"
@@ -191,7 +191,7 @@ function SendAndRecord({ user }) {
           </div>
           
           <div className="form-group">
-            <label htmlFor="creditLedgerName" className="form-label">Credit Account (Decreases)</label>
+            <label htmlFor="creditLedgerName" className="form-label">To</label>
             <select
               id="creditLedgerName"
               name="creditLedgerName"
