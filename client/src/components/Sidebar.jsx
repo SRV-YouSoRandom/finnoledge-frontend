@@ -7,7 +7,9 @@ import {
   IconCoin, 
   IconPlus,
   IconReport,
-  IconFileText
+  IconFileText,
+  IconPackage,
+  IconTrendingUp
 } from '@tabler/icons-react';
 import './Sidebar.css';
 
@@ -54,6 +56,20 @@ function Sidebar() {
             </NavLink>
           </li>
           
+          <li className="sidebar-section">Inventory</li>
+          <li>
+            <NavLink to="/products" className={({ isActive }) => isActive ? 'active' : ''}>
+              <IconPackage size={20} />
+              <span>Products</span>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink to="/stock-movements" className={({ isActive }) => isActive ? 'active' : ''}>
+              <IconTrendingUp size={20} />
+              <span>Stock Movements</span>
+            </NavLink>
+          </li>
+          
           <li className="sidebar-section">Reports</li>
           <li>
             <NavLink to="/balance-sheet" className={({ isActive }) => isActive ? 'active' : ''}>
@@ -85,6 +101,18 @@ function Sidebar() {
             <NavLink to="/create-journal-entry" className={({ isActive }) => isActive ? 'active' : ''}>
               <IconPlus size={20} />
               <span>New Journal Entry</span>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink to="/create-product" className={({ isActive }) => isActive ? 'active' : ''}>
+              <IconPlus size={20} />
+              <span>New Product</span>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink to="/record-stock-movement" className={({ isActive }) => isActive ? 'active' : ''}>
+              <IconPlus size={20} />
+              <span>Record Movement</span>
             </NavLink>
           </li>
         </ul>
