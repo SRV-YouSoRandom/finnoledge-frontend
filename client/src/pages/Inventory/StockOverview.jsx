@@ -16,7 +16,8 @@ function StockOverview() {
         
         // Fetch all stock entries
         const stockResponse = await api.fetchStockEntries();
-        const stockData = stockResponse.data.StockEntry || [];
+        // Fix: Use lowercase 'stockEntry' from API response
+        const stockData = stockResponse.data.stockEntry || [];
         setStockEntries(stockData);
         
         // Fetch all products for reference
@@ -39,8 +40,10 @@ function StockOverview() {
   };
 
   const getStockStatus = (quantity) => {
-    if (quantity === 0) return { status: 'Out of Stock', color: '#ea4335', icon: IconAlertCircle };
-    if (quantity < 10) return { status: 'Low Stock', color: '#fbbc04', icon: IconAlertCircle };
+    // Convert quantity to number since API returns string
+    const qty = parseInt(quantity, 10) || 0;
+    if (qty === 0) return { status: 'Out of Stock', color: '#ea4335', icon: IconAlertCircle };
+    if (qty < 10) return { status: 'Low Stock', color: '#fbbc04', icon: IconAlertCircle };
     return { status: 'In Stock', color: '#34a853', icon: IconTrendingUp };
   };
 
@@ -86,7 +89,7 @@ function StockOverview() {
             </h2>
           </div>
           <div className="balance-display">
-            {stockEntries.filter(s => s.quantityOnHand > 0).length}
+            {stockEntries.filter(s => parseInt(s.quantityOnHand, 10) > 0).length}
           </div>
         </div>
         
@@ -98,7 +101,7 @@ function StockOverview() {
             </h2>
           </div>
           <div className="balance-display" style={{ color: '#ea4335' }}>
-            {stockEntries.filter(s => s.quantityOnHand < 10).length}
+            {stockEntries.filter(s => parseInt(s.quantityOnHand, 10) < 10).length}
           </div>
         </div>
       </div>
@@ -128,6 +131,7 @@ function StockOverview() {
               const product = getProductDetails(stock.productName);
               const status = getStockStatus(stock.quantityOnHand);
               const StatusIcon = status.icon;
+              const quantity = parseInt(stock.quantityOnHand, 10) || 0;
               
               return (
                 <tr key={stock.productName}>
@@ -141,9 +145,9 @@ function StockOverview() {
                   <td style={{ 
                     fontWeight: '600', 
                     fontSize: '16px',
-                    color: stock.quantityOnHand === 0 ? '#ea4335' : '#202124'
+                    color: quantity === 0 ? '#ea4335' : '#202124'
                   }}>
-                    {stock.quantityOnHand}
+                    {quantity}
                   </td>
                   <td>{product?.unitOfMeasure || 'Unit'}</td>
                   <td>

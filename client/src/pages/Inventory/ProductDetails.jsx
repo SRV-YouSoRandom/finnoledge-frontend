@@ -23,7 +23,8 @@ function ProductDetails() {
         // Fetch stock entry for this product
         try {
           const stockResponse = await api.fetchStockEntry(productData.name);
-          setStockEntry(stockResponse.data.StockEntry);
+          // Fix: Use lowercase 'stockEntry' from API response
+          setStockEntry(stockResponse.data.stockEntry);
         } catch (stockError) {
           // Stock entry might not exist, that's ok
           console.log('No stock entry found for product:', productData.name);
@@ -33,7 +34,8 @@ function ProductDetails() {
         // Fetch all stock movements and filter by product name
         try {
           const movementsResponse = await api.fetchStockMovements();
-          const allMovements = movementsResponse.data.StockMovementLog || [];
+          // Fix: Use lowercase 'stockMovementLog' from API response
+          const allMovements = movementsResponse.data.stockMovementLog || [];
           const productMovements = allMovements.filter(movement => 
             movement.productName === productData.name
           );
