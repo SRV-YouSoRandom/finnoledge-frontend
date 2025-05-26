@@ -15,7 +15,7 @@ function StockOverview() {
         setLoading(true);
         
         // Fetch all stock entries
-        const stockResponse = await api.fetchAllStockEntries();
+        const stockResponse = await api.fetchStockEntries();
         const stockData = stockResponse.data.StockEntry || [];
         setStockEntries(stockData);
         
@@ -180,4 +180,62 @@ function StockOverview() {
             {products
               .filter(product => !stockEntries.find(stock => stock.productName === product.name))
               .map(product => (
-                <tr key={
+                <tr key={`no-stock-${product.id}`}>
+                  <td>
+                    <div className="list-item-title">
+                      <IconPackage size={16} style={{ marginRight: '8px' }} />
+                      {product.name}
+                    </div>
+                  </td>
+                  <td>{product.description || 'No description'}</td>
+                  <td style={{ 
+                    fontWeight: '600', 
+                    fontSize: '16px',
+                    color: '#ea4335'
+                  }}>
+                    0
+                  </td>
+                  <td>{product.unitOfMeasure || 'Unit'}</td>
+                  <td>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <IconAlertCircle size={16} style={{ color: '#ea4335' }} />
+                      <span style={{ color: '#ea4335', fontWeight: '500' }}>
+                        No Stock
+                      </span>
+                    </div>
+                  </td>
+                  <td>
+                    <div className="button-group">
+                      <Link 
+                        to={`/record-stock-movement?product=${product.name}`} 
+                        className="button button-secondary"
+                      >
+                        Add Stock
+                      </Link>
+                      <Link 
+                        to={`/products/${product.id}`} 
+                        className="button button-secondary"
+                      >
+                        View Product
+                      </Link>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            
+            {/* Empty state when no products exist */}
+            {products.length === 0 && (
+              <tr>
+                <td colSpan="6" className="empty-state">
+                  No products found. Start by defining your first product using the button above.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+export default StockOverview;

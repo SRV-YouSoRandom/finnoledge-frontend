@@ -9,7 +9,8 @@ import {
   IconReport,
   IconFileText,
   IconPackage,
-  IconTrendingUp
+  IconTrendingUp,
+  IconClipboardList
 } from '@tabler/icons-react';
 import './Sidebar.css';
 
@@ -57,6 +58,12 @@ function Sidebar() {
           </li>
           
           <li className="sidebar-section">Inventory</li>
+          <li>
+            <NavLink to="/stock-overview" className={({ isActive }) => isActive ? 'active' : ''}>
+              <IconClipboardList size={20} />
+              <span>Stock Overview</span>
+            </NavLink>
+          </li>
           <li>
             <NavLink to="/products" className={({ isActive }) => isActive ? 'active' : ''}>
               <IconPackage size={20} />

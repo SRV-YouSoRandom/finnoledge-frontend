@@ -17,6 +17,7 @@ import ProductDetails from './pages/Inventory/ProductDetails';
 import CreateProduct from './pages/Inventory/CreateProduct';
 import StockMovementList from './pages/Inventory/StockMovementList';
 import RecordStockMovement from './pages/Inventory/RecordStockMovement';
+import StockOverview from './pages/Inventory/StockOverview';
 import BalanceSheet from './pages/Reports/BalanceSheet';
 import ProfitAndLoss from './pages/Reports/ProfitAndLoss';
 import './App.css';
@@ -51,6 +52,7 @@ function App() {
             <Route path="/send-and-record" element={<SendAndRecord user={walletAddress} />} />
 
             {/* Inventory Routes */}
+            <Route path="/stock-overview" element={<StockOverview />} />
             <Route path="/products" element={<ProductList />} />
             <Route path="/products/:id" element={<ProductDetails />} />
             <Route path="/create-product" element={<CreateProduct user={walletAddress} />} />
