@@ -5,6 +5,7 @@ const bodyParser = require('body-parser');
 const groupController = require('./controllers/groupController');
 const ledgerController = require('./controllers/ledgerController');
 const journalEntryController = require('./controllers/journalEntryController');
+const inventoryController = require('./controllers/inventoryController');
 
 // Initialize Express app
 const app = express();
@@ -26,6 +27,10 @@ apiRouter.post('/ledgers', ledgerController.createLedger);
 // Journal Entry routes
 apiRouter.post('/journal-entries', journalEntryController.createJournalEntry);
 apiRouter.post('/send-and-record', journalEntryController.sendAndRecord);
+
+// Inventory routes
+apiRouter.post('/inventory/products', inventoryController.defineProduct);
+apiRouter.post('/inventory/stock-movements', inventoryController.recordStockMovement);
 
 // Use API router
 app.use('/api', apiRouter);

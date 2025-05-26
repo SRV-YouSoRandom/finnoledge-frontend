@@ -21,6 +21,18 @@ const api = {
   
   // Bank balances
   fetchBalance: (address) => axios.get(`${API_URL}/cosmos/bank/v1beta1/balances/${address}`),
+  
+  // Inventory - Products
+  fetchProducts: () => axios.get(`${API_URL}/erprollup/inventory/product`),
+  fetchProduct: (id) => axios.get(`${API_URL}/erprollup/inventory/product/${id}`),
+  
+  // Inventory - Stock Entries
+  fetchStockEntries: () => axios.get(`${API_URL}/erprollup/inventory/stock_entry`),
+  fetchStockEntry: (productName) => axios.get(`${API_URL}/erprollup/inventory/stock_entry/${productName}`),
+  
+  // Inventory - Stock Movement Logs
+  fetchStockMovementLogs: () => axios.get(`${API_URL}/erprollup/inventory/stock_movement_log`),
+  fetchStockMovementLog: (id) => axios.get(`${API_URL}/erprollup/inventory/stock_movement_log/${id}`),
 };
 
 // CLI command endpoints for POST requests
@@ -36,6 +48,12 @@ const cli = {
   
   // Send and Record Transaction
   sendAndRecord: (data) => axios.post(`${SERVER_URL}/send-and-record`, data),
+  
+  // Inventory - Products
+  defineProduct: (data) => axios.post(`${SERVER_URL}/inventory/products`, data),
+  
+  // Inventory - Stock Movements
+  recordStockMovement: (data) => axios.post(`${SERVER_URL}/inventory/stock-movements`, data),
 };
 
 export { api, cli };
