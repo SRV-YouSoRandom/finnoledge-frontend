@@ -18,7 +18,7 @@ function Sidebar() {
   return (
     <aside className="sidebar">
       <div className="sidebar-header">
-        <h2>FinnoLedge</h2>
+        <h2>Verinet</h2>
       </div>
       <nav className="sidebar-nav">
         <ul>
