@@ -29,7 +29,7 @@ function Dashboard({ user }) {
         setLoading(true);
         
         // Get wallet address from user for balance check
-        const address = "erp1qejkhwqskn3vzsyaujrfps9fsgkg05jl2jh4lj";
+        const address = "erp158e90met7jqga8jwgl80su70hkc88nsy7vvgy0";
         
         const [balanceRes, groupsRes, ledgersRes, entriesRes] = await Promise.all([
           api.fetchBalance(address),

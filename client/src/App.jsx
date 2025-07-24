@@ -2,16 +2,26 @@ import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Dashboard from './pages/Dashboard';
+
+// Groups
 import GroupList from './pages/Groups/GroupList';
 import GroupDetails from './pages/Groups/GroupDetails';
 import CreateGroup from './pages/Groups/CreateGroup';
+
+// Ledgers
 import LedgerList from './pages/Ledgers/LedgerList';
 import LedgerDetails from './pages/Ledgers/LedgerDetails';
 import CreateLedger from './pages/Ledgers/CreateLedger';
+
+// Journal Entries
 import JournalEntryList from './pages/JournalEntries/JournalEntryList';
 import JournalEntryDetails from './pages/JournalEntries/JournalEntryDetails';
 import CreateJournalEntry from './pages/JournalEntries/CreateJournalEntry';
+
+// Transactions
 import SendAndRecord from './pages/Transactions/SendAndRecord';
+
+// Inventory
 import ProductList from './pages/Inventory/ProductList';
 import ProductDetails from './pages/Inventory/ProductDetails';
 import CreateProduct from './pages/Inventory/CreateProduct';
@@ -19,8 +29,28 @@ import StockMovementList from './pages/Inventory/StockMovementList';
 import RecordStockMovement from './pages/Inventory/RecordStockMovement';
 import StockOverview from './pages/Inventory/StockOverview';
 import StockMovementDetails from './pages/Inventory/StockMovementDetails';
+
+// Reports
 import BalanceSheet from './pages/Reports/BalanceSheet';
 import ProfitAndLoss from './pages/Reports/ProfitAndLoss';
+
+// HR
+import HRDashboard from './pages/HR/HRDashboard';
+import OfferLetterList from './pages/HR/OfferLetters/OfferLetterList';
+import OfferLetterDetails from './pages/HR/OfferLetters/OfferLetterDetails';
+import CreateOfferLetter from './pages/HR/OfferLetters/CreateOfferLetter';
+import EmployeeList from './pages/HR/Employees/EmployeeList';
+import EmployeeDetails from './pages/HR/Employees/EmployeeDetails';
+import AcceptOffer from './pages/HR/Employees/AcceptOffer';
+import AssignRole from './pages/HR/Employees/AssignRole';
+import RoleList from './pages/HR/Roles/RoleList';
+import RoleDetails from './pages/HR/Roles/RoleDetails';
+import CreateRole from './pages/HR/Roles/CreateRole';
+import LeaveRequestList from './pages/HR/LeaveRequests/LeaveRequestList';
+import LeaveRequestDetails from './pages/HR/LeaveRequests/LeaveRequestDetails';
+import CreateLeaveRequest from './pages/HR/LeaveRequests/CreateLeaveRequest';
+import ProcessLeaveRequest from './pages/HR/LeaveRequests/ProcessLeaveRequest';
+
 import './App.css';
 
 function App() {
@@ -60,6 +90,23 @@ function App() {
             <Route path="/stock-movements" element={<StockMovementList />} />
             <Route path="/record-stock-movement" element={<RecordStockMovement user={walletAddress} />} />
             <Route path="/stock-movements/:id" element={<StockMovementDetails />} />
+
+            {/* HR Routes */}
+            <Route path="/hr" element={<HRDashboard user={walletAddress} />} />
+            <Route path="/hr/offer-letters" element={<OfferLetterList />} />
+            <Route path="/hr/offer-letters/:id" element={<OfferLetterDetails />} />
+            <Route path="/hr/create-offer-letter" element={<CreateOfferLetter user={walletAddress} />} />
+            <Route path="/hr/employees" element={<EmployeeList />} />
+            <Route path="/hr/employees/:id" element={<EmployeeDetails />} />
+            <Route path="/hr/assign-role/:employeeId" element={<AssignRole user={walletAddress} />} />
+            <Route path="/hr/accept-offer/:offerId" element={<AcceptOffer user={walletAddress} />} />
+            <Route path="/hr/roles" element={<RoleList />} />
+            <Route path="/hr/roles/:id" element={<RoleDetails />} />
+            <Route path="/hr/create-role" element={<CreateRole user={walletAddress} />} />
+            <Route path="/hr/leave-requests" element={<LeaveRequestList />} />
+            <Route path="/hr/leave-requests/:id" element={<LeaveRequestDetails />} />
+            <Route path="/hr/create-leave-request" element={<CreateLeaveRequest user={walletAddress} />} />
+            <Route path="/hr/process-leave-request/:requestId" element={<ProcessLeaveRequest user={walletAddress} />} />
 
             {/* Reports */}
             <Route path="/balance-sheet" element={<BalanceSheet />} />

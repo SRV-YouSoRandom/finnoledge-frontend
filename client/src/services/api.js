@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // REST API base URL
-const API_URL = 'http://212.90.121.86:1317';
+const API_URL = 'http://38.242.225.16:1317';
 // Backend server for CLI commands
 const SERVER_URL = '/api';
 
@@ -30,13 +30,25 @@ const api = {
   fetchStockEntries: () => axios.get(`${API_URL}/erprollup/inventory/stock_entry`),
   fetchStockEntry: (productName) => axios.get(`${API_URL}/erprollup/inventory/stock_entry/${productName}`),
   
-  // Inventory - Stock Movement Logs (FIXED: was fetchStockMovements)
+  // Inventory - Stock Movement Logs
   fetchStockMovements: () => axios.get(`${API_URL}/erprollup/inventory/stock_movement_log`),
   fetchStockMovement: (id) => axios.get(`${API_URL}/erprollup/inventory/stock_movement_log/${id}`),
   
-  // Keep the original method names for backward compatibility
-  fetchStockMovementLogs: () => axios.get(`${API_URL}/erprollup/inventory/stock_movement_log`),
-  fetchStockMovementLog: (id) => axios.get(`${API_URL}/erprollup/inventory/stock_movement_log/${id}`),
+  // HR - Offer Letters
+  fetchOfferLetters: () => axios.get(`${API_URL}/erprollup/hr/offer_letter`),
+  fetchOfferLetter: (id) => axios.get(`${API_URL}/erprollup/hr/offer_letter/${id}`),
+  
+  // HR - Employees
+  fetchEmployees: () => axios.get(`${API_URL}/erprollup/hr/employee`),
+  fetchEmployee: (id) => axios.get(`${API_URL}/erprollup/hr/employee/${id}`),
+  
+  // HR - Roles
+  fetchRoles: () => axios.get(`${API_URL}/erprollup/hr/role`),
+  fetchRole: (id) => axios.get(`${API_URL}/erprollup/hr/role/${id}`),
+  
+  // HR - Leave Requests
+  fetchLeaveRequests: () => axios.get(`${API_URL}/erprollup/hr/leave_request`),
+  fetchLeaveRequest: (id) => axios.get(`${API_URL}/erprollup/hr/leave_request/${id}`),
 };
 
 // CLI command endpoints for POST requests
@@ -58,6 +70,18 @@ const cli = {
   
   // Inventory - Stock Movements
   recordStockMovement: (data) => axios.post(`${SERVER_URL}/inventory/stock-movements`, data),
+  
+  // HR - Offer Letters
+  createOfferLetter: (data) => axios.post(`${SERVER_URL}/hr/offer-letters`, data),
+  acceptOfferLetter: (data) => axios.post(`${SERVER_URL}/hr/accept-offer`, data),
+  
+  // HR - Roles
+  defineRole: (data) => axios.post(`${SERVER_URL}/hr/roles`, data),
+  assignRoleToEmployee: (data) => axios.post(`${SERVER_URL}/hr/assign-role`, data),
+  
+  // HR - Leave Requests
+  submitLeaveRequest: (data) => axios.post(`${SERVER_URL}/hr/leave-requests`, data),
+  processLeaveRequest: (data) => axios.post(`${SERVER_URL}/hr/process-leave-request`, data),
 };
 
 export { api, cli };

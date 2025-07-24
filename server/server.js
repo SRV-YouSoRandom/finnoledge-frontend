@@ -6,6 +6,7 @@ const groupController = require('./controllers/groupController');
 const ledgerController = require('./controllers/ledgerController');
 const journalEntryController = require('./controllers/journalEntryController');
 const inventoryController = require('./controllers/inventoryController');
+const hrController = require('./controllers/hrController');
 
 // Initialize Express app
 const app = express();
@@ -31,6 +32,14 @@ apiRouter.post('/send-and-record', journalEntryController.sendAndRecord);
 // Inventory routes
 apiRouter.post('/inventory/products', inventoryController.defineProduct);
 apiRouter.post('/inventory/stock-movements', inventoryController.recordStockMovement);
+
+// HR routes
+apiRouter.post('/hr/offer-letters', hrController.createOfferLetter);
+apiRouter.post('/hr/accept-offer', hrController.acceptOfferLetter);
+apiRouter.post('/hr/roles', hrController.defineRole);
+apiRouter.post('/hr/assign-role', hrController.assignRoleToEmployee);
+apiRouter.post('/hr/leave-requests', hrController.submitLeaveRequest);
+apiRouter.post('/hr/process-leave-request', hrController.processLeaveRequest);
 
 // Use API router
 app.use('/api', apiRouter);

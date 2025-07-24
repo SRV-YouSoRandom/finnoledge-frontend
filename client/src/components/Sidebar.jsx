@@ -10,7 +10,11 @@ import {
   IconFileText,
   IconPackage,
   IconTrendingUp,
-  IconClipboardList
+  IconClipboardList,
+  IconUsers,
+  IconUserPlus,
+  IconBriefcase,
+  IconCalendarTime
 } from '@tabler/icons-react';
 import './Sidebar.css';
 
@@ -77,6 +81,38 @@ function Sidebar() {
             </NavLink>
           </li>
           
+          <li className="sidebar-section">Human Resources</li>
+          <li>
+            <NavLink to="/hr" className={({ isActive }) => isActive ? 'active' : ''}>
+              <IconUsers size={20} />
+              <span>HR Dashboard</span>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink to="/hr/offer-letters" className={({ isActive }) => isActive ? 'active' : ''}>
+              <IconFileText size={20} />
+              <span>Offer Letters</span>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink to="/hr/employees" className={({ isActive }) => isActive ? 'active' : ''}>
+              <IconUsers size={20} />
+              <span>Employees</span>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink to="/hr/roles" className={({ isActive }) => isActive ? 'active' : ''}>
+              <IconBriefcase size={20} />
+              <span>Roles</span>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink to="/hr/leave-requests" className={({ isActive }) => isActive ? 'active' : ''}>
+              <IconCalendarTime size={20} />
+              <span>Leave Requests</span>
+            </NavLink>
+          </li>
+          
           <li className="sidebar-section">Reports</li>
           <li>
             <NavLink to="/balance-sheet" className={({ isActive }) => isActive ? 'active' : ''}>
@@ -120,6 +156,12 @@ function Sidebar() {
             <NavLink to="/record-stock-movement" className={({ isActive }) => isActive ? 'active' : ''}>
               <IconPlus size={20} />
               <span>Record Movement</span>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink to="/hr/create-offer-letter" className={({ isActive }) => isActive ? 'active' : ''}>
+              <IconPlus size={20} />
+              <span>New Offer Letter</span>
             </NavLink>
           </li>
         </ul>
