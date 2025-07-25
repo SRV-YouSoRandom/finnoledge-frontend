@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { cli } from '../../services/api';
+import { useTransactionNotification } from '../../hooks/useTransactionNotification';
 import { IconArrowLeft } from '@tabler/icons-react';
 
 function CreateGroup({ user }) {
   const navigate = useNavigate();
+  const { notifyTransactionSubmitted, notifyTransactionSuccess, notifyTransactionError, extractTxHashFromResponse } = useTransactionNotification();
+  
   const [formData, setFormData] = useState({
     name: '',
     description: '',
