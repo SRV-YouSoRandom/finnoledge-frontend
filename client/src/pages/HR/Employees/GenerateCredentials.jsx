@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { api, cli } from '../../../services/api';
 import { IconArrowLeft, IconKey, IconCopy, IconRefresh, IconEye, IconEyeOff, IconInfo } from '@tabler/icons-react';
-import toast from 'react-hot-toast';
 
 function GenerateCredentials({ user }) {
   const { employeeId } = useParams();
