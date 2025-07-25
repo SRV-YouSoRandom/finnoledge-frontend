@@ -2,10 +2,13 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { api, cli } from '../../../services/api';
-import { IconArrowLeft, IconKey, IconCopy, IconRefresh, IconEye, IconEyeOff, IconInfo } from '@tabler/icons-react';
+import { useTransactionNotification } from '../../../hooks/useTransactionNotification';
+import { IconArrowLeft, IconKey, IconCopy, IconRefresh, IconEye, IconEyeOff, IconInfoCircle } from '@tabler/icons-react';
+import toast from 'react-hot-toast';
 
 function GenerateCredentials({ user }) {
   const { employeeId } = useParams();
+  const { notifyTransactionSubmitted, notifyTransactionSuccess, notifyTransactionError, extractTxHashFromResponse } = useTransactionNotification();
   const [employee, setEmployee] = useState(null);
   const [credentials, setCredentials] = useState({
     systemId: '',
@@ -73,21 +76,21 @@ function GenerateCredentials({ user }) {
     }
 
     setUpdating(true);
-    const loadingToast = toast.loading('Updating password in system...');
+    const loadingToastId = notifyTransactionSubmitted('Updating password in system...');
 
     try {
-      await cli.changePassword({
+      const response = await cli.changePassword({
         employeeId: parseInt(employeeId),
         newPassword: credentials.password,
         user
       });
 
-      toast.dismiss(loadingToast);
-      toast.success('Password updated successfully in the system!', { duration: 3000 });
+      const txHash = extractTxHashFromResponse(response.data.data || '');
+      notifyTransactionSuccess('Password updated successfully in the system!', txHash, loadingToastId);
     } catch (error) {
       console.error('Error updating password:', error);
-      toast.dismiss(loadingToast);
-      toast.error('Failed to update password in system');
+      const errorMessage = error.response?.data?.message || 'Failed to update password in system';
+      notifyTransactionError(errorMessage, loadingToastId);
     } finally {
       setUpdating(false);
     }
@@ -201,7 +204,7 @@ Login at: [Your App URL]`;
         marginBottom: '24px'
       }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-          <IconInfo size={24} style={{ color: 'var(--primary-color)', marginTop: '2px' }} />
+          <IconInfoCircle size={24} style={{ color: 'var(--primary-color)', marginTop: '2px' }} />
           <div>
             <h3 style={{ margin: '0 0 8px 0', color: 'var(--primary-color)' }}>
               Important: Employee Login Instructions
