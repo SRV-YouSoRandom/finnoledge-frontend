@@ -17,6 +17,8 @@ const createOfferLetter = async (req, res) => {
     // Construct the CLI command with "Pending" status as default
     const command = `rollkit tx hr create-offer-letter "${candidateName}" "${position}" ${salary} "${joiningDate}" "Pending" --from ${user} --chain-id erprollup -y --fees 5stake`;
     
+    console.log('Executing command:', command);
+    
     // Execute the command
     const result = await executeCommand(command);
     
@@ -52,6 +54,8 @@ const acceptOfferLetter = async (req, res) => {
     
     // Construct the CLI command - this now creates address and password automatically
     const command = `rollkit tx hr accept-offer-letter ${offerId} "${employeeId}" "${contactInfo}" --from ${user} --chain-id erprollup -y --fees 5stake`;
+    
+    console.log('Executing command:', command);
     
     // Execute the command
     const result = await executeCommand(command);
@@ -97,6 +101,8 @@ const defineRole = async (req, res) => {
     // Construct the CLI command
     const command = `rollkit tx hr define-role "${name}" "${description}" "${permissions}" --from ${user} --chain-id erprollup -y --fees 5stake`;
     
+    console.log('Executing command:', command);
+    
     // Execute the command
     const result = await executeCommand(command);
     
@@ -123,7 +129,7 @@ const assignRoleToEmployee = async (req, res) => {
   try {
     const { employeeId, roleName, user = 'bob' } = req.body;
     
-    if (!employeeId || !roleName) {
+    if (employeeId === undefined || !roleName) {
       return res.status(400).json({
         success: false,
         message: 'Employee system ID and role name are required'
@@ -132,7 +138,7 @@ const assignRoleToEmployee = async (req, res) => {
     
     // IMPORTANT: employeeId should be the system ID (0, 1, 2...), not the HR employee ID
     const systemId = parseInt(employeeId);
-    if (isNaN(systemId)) {
+    if (isNaN(systemId) || systemId < 0) {
       return res.status(400).json({
         success: false,
         message: 'Employee ID must be a valid system ID number (0, 1, 2...)'
@@ -141,6 +147,8 @@ const assignRoleToEmployee = async (req, res) => {
     
     // Construct the CLI command using system ID
     const command = `rollkit tx hr assign-role-to-employee ${systemId} "${roleName}" --from ${user} --chain-id erprollup -y --fees 5stake`;
+    
+    console.log('Executing assign role command:', command);
     
     // Execute the command
     const result = await executeCommand(command);
@@ -162,13 +170,13 @@ const assignRoleToEmployee = async (req, res) => {
 
 /**
  * Submit leave request using the rollkit CLI
- * FIXED: Use system ID (0, 1, 2...) instead of employee ID (EMP001...)
+ * FIXED: Use system ID (0, 1, 2...) and ensure correct command format
  */
 const submitLeaveRequest = async (req, res) => {
   try {
     const { employeeId, startDate, endDate, reason, user = 'bob' } = req.body;
     
-    if (!employeeId || !startDate || !endDate || !reason) {
+    if (employeeId === undefined || !startDate || !endDate || !reason) {
       return res.status(400).json({
         success: false,
         message: 'Employee system ID, start date, end date, and reason are required'
@@ -177,7 +185,7 @@ const submitLeaveRequest = async (req, res) => {
     
     // IMPORTANT: employeeId should be the system ID (0, 1, 2...), not the HR employee ID
     const systemId = parseInt(employeeId);
-    if (isNaN(systemId)) {
+    if (isNaN(systemId) || systemId < 0) {
       return res.status(400).json({
         success: false,
         message: 'Employee ID must be a valid system ID number (0, 1, 2...)'
@@ -193,8 +201,21 @@ const submitLeaveRequest = async (req, res) => {
       });
     }
     
+    // Validate date logic
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    if (end < start) {
+      return res.status(400).json({
+        success: false,
+        message: 'End date cannot be before start date'
+      });
+    }
+    
     // Construct the CLI command using system ID
+    // From hrcommands.md: rollkit tx hr submit-leave-request employeeId startDate endDate reason
     const command = `rollkit tx hr submit-leave-request ${systemId} "${startDate}" "${endDate}" "${reason}" --from ${user} --chain-id erprollup -y --fees 5stake`;
+    
+    console.log('Executing submit leave request command:', command);
     
     // Execute the command
     const result = await executeCommand(command);
@@ -216,12 +237,13 @@ const submitLeaveRequest = async (req, res) => {
 
 /**
  * Process leave request using the rollkit CLI
+ * FIXED: Ensure correct command format and status values
  */
 const processLeaveRequest = async (req, res) => {
   try {
     const { requestId, newStatus, user = 'bob' } = req.body;
     
-    if (!requestId || !newStatus) {
+    if (requestId === undefined || !newStatus) {
       return res.status(400).json({
         success: false,
         message: 'Request ID and new status are required'
@@ -230,14 +252,14 @@ const processLeaveRequest = async (req, res) => {
     
     // Ensure requestId is a number
     const reqId = parseInt(requestId);
-    if (isNaN(reqId)) {
+    if (isNaN(reqId) || reqId < 0) {
       return res.status(400).json({
         success: false,
-        message: 'Request ID must be a valid number'
+        message: 'Request ID must be a valid number (0, 1, 2...)'
       });
     }
     
-    // Validate status
+    // Validate status - should match exactly what the blockchain expects
     const validStatuses = ['Approved', 'Rejected'];
     if (!validStatuses.includes(newStatus)) {
       return res.status(400).json({
@@ -247,14 +269,17 @@ const processLeaveRequest = async (req, res) => {
     }
     
     // Construct the CLI command
+    // From hrcommands.md: rollkit tx hr process-leave-request requestId newStatus
     const command = `rollkit tx hr process-leave-request ${reqId} "${newStatus}" --from ${user} --chain-id erprollup -y --fees 5stake`;
+    
+    console.log('Executing process leave request command:', command);
     
     // Execute the command
     const result = await executeCommand(command);
     
     return res.status(200).json({
       success: true,
-      message: 'Leave request processed successfully',
+      message: `Leave request ${newStatus.toLowerCase()} successfully`,
       data: result.stdout
     });
   } catch (error) {
@@ -275,7 +300,7 @@ const changePassword = async (req, res) => {
   try {
     const { employeeId, newPassword, user = 'bob' } = req.body;
     
-    if (!employeeId || !newPassword) {
+    if (employeeId === undefined || !newPassword) {
       return res.status(400).json({
         success: false,
         message: 'Employee system ID and new password are required'
@@ -284,7 +309,7 @@ const changePassword = async (req, res) => {
     
     // IMPORTANT: employeeId should be the system ID (0, 1, 2...), not the HR employee ID
     const systemId = parseInt(employeeId);
-    if (isNaN(systemId)) {
+    if (isNaN(systemId) || systemId < 0) {
       return res.status(400).json({
         success: false,
         message: 'Employee ID must be a valid system ID number (0, 1, 2...)'
@@ -301,6 +326,8 @@ const changePassword = async (req, res) => {
     
     // Construct the CLI command using system ID
     const command = `rollkit tx hr change-password ${systemId} "${newPassword}" --from ${user} --chain-id erprollup -y --fees 5stake`;
+    
+    console.log('Executing change password command:', command);
     
     // Execute the command
     const result = await executeCommand(command);

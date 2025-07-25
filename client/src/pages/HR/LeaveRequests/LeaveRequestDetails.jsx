@@ -8,6 +8,7 @@ function LeaveRequestDetails() {
   const [leaveRequest, setLeaveRequest] = useState(null);
   const [employee, setEmployee] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchLeaveRequestDetails = async () => {
@@ -19,21 +20,38 @@ function LeaveRequestDetails() {
         const leaveData = leaveResponse.data.LeaveRequest;
         setLeaveRequest(leaveData);
         
-        // Fetch employee details
+        console.log('Leave request data:', leaveData);
+        
+        // Fetch employee details using the employeeId from leave request
+        // IMPORTANT: The employeeId in leave request is the system ID (0, 1, 2...)
         try {
           const employeesResponse = await api.fetchEmployees();
-          const allEmployees = employeesResponse.data.Employee || [];
-          const requestEmployee = allEmployees.find(emp => 
+          const employees = employeesResponse.data.Employee || [];
+          
+          console.log('All employees:', employees);
+          console.log('Looking for employee with system ID:', leaveData.employeeId);
+          
+          // Find employee by system ID (leaveData.employeeId matches employee.id)
+          const requestEmployee = employees.find(emp => 
             emp.id.toString() === leaveData.employeeId.toString()
           );
-          setEmployee(requestEmployee);
+          
+          if (requestEmployee) {
+            setEmployee(requestEmployee);
+            console.log('Found employee for leave request:', requestEmployee);
+          } else {
+            console.log('No employee found for system ID:', leaveData.employeeId);
+            console.log('Available employee IDs:', employees.map(emp => emp.id));
+            // Don't set this as an error, just log it
+          }
         } catch (employeeError) {
-          console.log('Employee details not found');
+          console.log('Error fetching employee details:', employeeError);
           setEmployee(null);
         }
         
       } catch (error) {
         console.error('Error fetching leave request details:', error);
+        setError('Failed to load leave request details.');
       } finally {
         setLoading(false);
       }
@@ -101,8 +119,30 @@ function LeaveRequestDetails() {
     return <div className="loading">Loading leave request details...</div>;
   }
 
+  if (error) {
+    return (
+      <div className="error-state">
+        {error}
+        <div style={{ marginTop: '16px' }}>
+          <Link to="/hr/leave-requests" className="button">
+            Back to Leave Requests
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   if (!leaveRequest) {
-    return <div className="error-state">Leave request not found</div>;
+    return (
+      <div className="error-state">
+        Leave request not found
+        <div style={{ marginTop: '16px' }}>
+          <Link to="/hr/leave-requests" className="button">
+            Back to Leave Requests
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   const totalDays = calculateDuration(leaveRequest.startDate, leaveRequest.endDate);
@@ -152,30 +192,56 @@ function LeaveRequestDetails() {
               <div className="detail-value">{leaveRequest.id}</div>
             </div>
             <div className="detail-item">
-              <div className="detail-label">Employee ID</div>
+              <div className="detail-label">Employee System ID</div>
               <div className="detail-value">
                 <code style={{ 
-                  backgroundColor: 'rgba(0,0,0,0.05)', 
+                  backgroundColor: 'rgba(26, 115, 232, 0.1)', 
                   padding: '4px 8px', 
                   borderRadius: '4px',
-                  fontSize: '14px'
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  color: 'var(--primary-color)'
                 }}>
                   {leaveRequest.employeeId}
                 </code>
               </div>
             </div>
-            {employee && (
-              <div className="detail-item">
-                <div className="detail-label">Employee Name</div>
-                <div className="detail-value" style={{ fontWeight: '600' }}>
-                  {employee.name}
+            {employee ? (
+              <>
+                <div className="detail-item">
+                  <div className="detail-label">Employee Name</div>
+                  <div className="detail-value" style={{ fontWeight: '600' }}>
+                    {employee.name}
+                  </div>
                 </div>
-              </div>
-            )}
-            {employee && (
+                <div className="detail-item">
+                  <div className="detail-label">HR Employee ID</div>
+                  <div className="detail-value">
+                    <code style={{ 
+                      backgroundColor: 'rgba(0,0,0,0.05)', 
+                      padding: '2px 6px', 
+                      borderRadius: '4px',
+                      fontSize: '12px'
+                    }}>
+                      {employee.employeeId}
+                    </code>
+                  </div>
+                </div>
+                <div className="detail-item">
+                  <div className="detail-label">Department</div>
+                  <div className="detail-value">{employee.department || 'Not Assigned'}</div>
+                </div>
+                <div className="detail-item">
+                  <div className="detail-label">Position</div>
+                  <div className="detail-value">{employee.position}</div>
+                </div>
+              </>
+            ) : (
               <div className="detail-item">
-                <div className="detail-label">Department</div>
-                <div className="detail-value">{employee.department || 'Not Assigned'}</div>
+                <div className="detail-label">Employee Info</div>
+                <div className="detail-value" style={{ color: '#ea4335' }}>
+                  Employee details not found for System ID: {leaveRequest.employeeId}
+                </div>
               </div>
             )}
             <div className="detail-item">

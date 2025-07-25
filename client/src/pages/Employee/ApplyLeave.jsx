@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { cli } from '../../services/api';
 import { useTransactionNotification } from '../../hooks/useTransactionNotification';
 import { IconArrowLeft, IconCalendarTime } from '@tabler/icons-react';
+import toast from 'react-hot-toast';
 
 function ApplyLeave() {
   const navigate = useNavigate();
@@ -24,6 +25,8 @@ function ApplyLeave() {
       ...prev,
       [name]: value
     }));
+    // Clear error when user starts typing
+    if (error) setError(null);
   };
 
 const handleSubmit = async (e) => {
@@ -49,31 +52,81 @@ const handleSubmit = async (e) => {
     return;
   }
 
+  // Validate reason
+  if (!formData.reason.trim()) {
+    setError('Reason is required');
+    setSubmitting(false);
+    return;
+  }
+
+  if (formData.reason.trim().length < 5) {
+    setError('Reason must be at least 5 characters long');
+    setSubmitting(false);
+    return;
+  }
+
   const loadingToastId = notifyTransactionSubmitted('Submitting leave request...');
 
   try {
-    // FIXED: Use systemId (0, 1, 2...) instead of employeeData.id
+    // Get the system ID for this employee
     // The systemId is the blockchain-generated ID that CLI commands expect
-    const systemEmployeeId = user.systemId || user.employeeData.id;
+    const systemEmployeeId = user.systemId || user.employeeData?.id;
     
-    console.log('Submitting leave request for system ID:', systemEmployeeId); // Debug log
+    if (systemEmployeeId === undefined || systemEmployeeId === null) {
+      throw new Error('Employee system ID not found. Please log out and log back in.');
+    }
     
-    const response = await cli.submitLeaveRequest({
-      employeeId: parseInt(systemEmployeeId), // Use system ID, not HR employee ID
-      startDate: formData.startDate,
-      endDate: formData.endDate,
-      reason: formData.reason,
-      user: user.walletAddress
+    console.log('Submitting leave request for employee:', {
+      systemId: systemEmployeeId,
+      employeeData: user.employeeData,
+      dates: { start: formData.startDate, end: formData.endDate },
+      reason: formData.reason
     });
+    
+    // Prepare the request data
+    const requestData = {
+      employeeId: parseInt(systemEmployeeId), // Ensure it's a number
+      startDate: formData.startDate, // Should be in YYYY-MM-DD format
+      endDate: formData.endDate,     // Should be in YYYY-MM-DD format
+      reason: formData.reason.trim(),
+      user: user.walletAddress || 'bob' // Use actual wallet address
+    };
+    
+    console.log('Sending request data:', requestData);
+    
+    const response = await cli.submitLeaveRequest(requestData);
+    
+    console.log('Leave request response:', response);
     
     const txHash = extractTxHashFromResponse(response.data.data || '');
     notifyTransactionSuccess('Leave request submitted successfully!', txHash, loadingToastId);
     
-    // Success - redirect to leave requests list
-    navigate('/employee/leave-requests');
+    // Show success message
+    toast.success('Leave request submitted! You will be redirected to your requests.', {
+      duration: 3000
+    });
+    
+    // Wait a moment then redirect
+    setTimeout(() => {
+      navigate('/employee/leave-requests');
+    }, 1500);
+    
   } catch (err) {
     console.error('Error submitting leave request:', err);
-    const errorMessage = err.response?.data?.message || 'Failed to submit leave request. Please try again.';
+    
+    // Extract the actual error message
+    let errorMessage = 'Failed to submit leave request. Please try again.';
+    
+    if (err.response?.data?.message) {
+      errorMessage = err.response.data.message;
+    } else if (err.response?.data?.error) {
+      errorMessage = err.response.data.error;
+    } else if (err.message) {
+      errorMessage = err.message;
+    }
+    
+    console.error('Processed error message:', errorMessage);
+    
     setError(errorMessage);
     notifyTransactionError(errorMessage, loadingToastId);
   } finally {
@@ -97,6 +150,26 @@ const handleSubmit = async (e) => {
   // Get today's date in YYYY-MM-DD format for min date
   const today = new Date().toISOString().split('T')[0];
 
+  // If user data is not available, show error
+  if (!user || !user.employeeData) {
+    return (
+      <div className="apply-leave">
+        <div className="page-header">
+          <h1>Apply for Leave</h1>
+          <Link to="/employee/leave-requests" className="button button-secondary">
+            <IconArrowLeft size={16} />
+            <span>Back to My Requests</span>
+          </Link>
+        </div>
+        <div className="card">
+          <div className="error-message">
+            Employee data not found. Please log out and log back in.
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="apply-leave">
       <div className="page-header">
@@ -115,7 +188,7 @@ const handleSubmit = async (e) => {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', fontSize: '14px' }}>
             <div><strong>Name:</strong> {user?.employeeData?.name}</div>
             <div><strong>Employee ID:</strong> {user?.employeeData?.employeeId}</div>
-            <div><strong>System ID:</strong> <code style={{ backgroundColor: 'rgba(26, 115, 232, 0.1)', padding: '2px 4px', borderRadius: '3px' }}>{user?.systemId || user?.employeeData?.id}</code></div>
+            <div><strong>System ID:</strong> <code style={{ backgroundColor: 'rgba(26, 115, 232, 0.1)', padding: '2px 4px', borderRadius: '3px', fontWeight: '600' }}>{user?.systemId || user?.employeeData?.id}</code></div>
             <div><strong>Department:</strong> {user?.employeeData?.department || 'Not Assigned'}</div>
             <div><strong>Position:</strong> {user?.employeeData?.position}</div>
           </div>
@@ -125,8 +198,8 @@ const handleSubmit = async (e) => {
         </div>
 
         {error && (
-          <div className="error-message">
-            {error}
+          <div className="error-message" style={{ marginBottom: '20px' }}>
+            <strong>Error:</strong> {error}
           </div>
         )}
         
@@ -189,9 +262,10 @@ const handleSubmit = async (e) => {
               required
               rows="4"
               placeholder="Please provide the reason for your leave request (e.g., Personal emergency, Medical appointment, Vacation, etc.)"
+              minLength="5"
             />
             <span className="form-hint">
-              Please provide a clear and detailed reason for your leave request
+              Please provide a clear and detailed reason for your leave request (minimum 5 characters)
             </span>
           </div>
           
