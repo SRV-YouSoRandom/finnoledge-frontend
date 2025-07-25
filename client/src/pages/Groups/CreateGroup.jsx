@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { cli } from '../../services/api';
 import { useTransactionNotification } from '../../hooks/useTransactionNotification';
 import { IconArrowLeft } from '@tabler/icons-react';
+import toast from 'react-hot-toast'; // Import toast directly
 
 function CreateGroup({ user }) {
   const navigate = useNavigate();
@@ -37,6 +38,9 @@ function CreateGroup({ user }) {
         user // Pass the user (wallet name) for CLI command execution
       });
       
+      // Dismiss the loading toast
+      toast.dismiss(toastId);
+      
       const txHash = extractTxHashFromResponse(response.data.data || '');
       notifyTransactionSuccess('Account group created successfully!', txHash);
       
@@ -44,6 +48,10 @@ function CreateGroup({ user }) {
       navigate('/groups');
     } catch (err) {
       console.error('Error creating group:', err);
+      
+      // Dismiss the loading toast
+      toast.dismiss(toastId);
+      
       const errorMessage = err.response?.data?.message || 'Failed to create group. Please try again.';
       setError(errorMessage);
       notifyTransactionError(errorMessage);
