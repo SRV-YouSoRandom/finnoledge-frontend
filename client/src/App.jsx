@@ -62,7 +62,6 @@ import EmployeeLeaveRequests from './pages/Employee/EmployeeLeaveRequests';
 import ApplyLeave from './pages/Employee/ApplyLeave';
 import EmployeeProfile from './pages/Employee/EmployeeProfile';
 import ChangePassword from './pages/Employee/ChangePassword';
-import GenerateCredentials from './pages/HR/Employees/GenerateCredentials';
 
 import './App.css';
 
@@ -119,7 +118,6 @@ function AppContent() {
               <Route path="/hr/create-offer-letter" element={<CreateOfferLetter user={user.walletAddress} />} />
               <Route path="/hr/employees" element={<EmployeeList />} />
               <Route path="/hr/employees/:id" element={<EmployeeDetails />} />
-              <Route path="/hr/generate-credentials/:employeeId" element={<GenerateCredentials />} />
               <Route path="/hr/assign-role/:employeeId" element={<AssignRole user={user.walletAddress} />} />
               <Route path="/hr/accept-offer/:offerId" element={<AcceptOffer user={user.walletAddress} />} />
               <Route path="/hr/roles" element={<RoleList />} />

@@ -60,13 +60,13 @@ function Login() {
     { 
       label: 'Employee Demo (ID: 0)', 
       loginId: '0', 
-      password: 'temp123',
+      password: 'newPassword123',
       description: 'First employee account (if exists)' 
     },
     { 
       label: 'Employee Demo (ID: 1)', 
       loginId: '1', 
-      password: 'temp123',
+      password: 'newPassword123',
       description: 'Second employee account (if exists)' 
     }
   ];
