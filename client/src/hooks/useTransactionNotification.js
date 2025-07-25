@@ -1,10 +1,11 @@
+// client/src/hooks/useTransactionNotification.js
 import { useCallback } from 'react';
 import toast from 'react-hot-toast';
 
 export const useTransactionNotification = () => {
   const showTransactionToast = useCallback((type, message, txHash = null) => {
     const toastOptions = {
-      duration: 5000,
+      duration: 4000,
       position: 'bottom-right',
       style: {
         maxWidth: '400px',
@@ -12,32 +13,25 @@ export const useTransactionNotification = () => {
       }
     };
 
-    // Create toast content as a function that returns JSX
-    const createToastContent = () => {
-      return `
-        ${message}
-        ${txHash ? `\nTx Hash: ${txHash}` : ''}
-      `;
-    };
-
     switch (type) {
       case 'success':
         if (txHash) {
-          toast.success(
+          return toast.success(
             `✅ ${message}\n🔗 Tx Hash: ${txHash}`,
             toastOptions
           );
         } else {
-          toast.success(`✅ ${message}`, toastOptions);
+          return toast.success(`✅ ${message}`, toastOptions);
         }
-        break;
       case 'error':
-        toast.error(`❌ ${message}`, toastOptions);
-        break;
+        return toast.error(`❌ ${message}`, toastOptions);
       case 'loading':
-        return toast.loading(`⏳ ${message}`, { ...toastOptions, duration: Infinity });
+        return toast.loading(`⏳ ${message}`, { 
+          ...toastOptions, 
+          duration: Infinity 
+        });
       default:
-        toast(`ℹ️ ${message}`, toastOptions);
+        return toast(`ℹ️ ${message}`, toastOptions);
     }
   }, []);
 
@@ -45,12 +39,20 @@ export const useTransactionNotification = () => {
     return showTransactionToast('loading', message);
   }, [showTransactionToast]);
 
-  const notifyTransactionSuccess = useCallback((message = 'Transaction recorded successfully', txHash = null) => {
-    showTransactionToast('success', message, txHash);
+  const notifyTransactionSuccess = useCallback((message = 'Transaction recorded successfully', txHash = null, loadingToastId = null) => {
+    // Dismiss the loading toast if provided
+    if (loadingToastId) {
+      toast.dismiss(loadingToastId);
+    }
+    return showTransactionToast('success', message, txHash);
   }, [showTransactionToast]);
 
-  const notifyTransactionError = useCallback((message = 'Transaction failed') => {
-    showTransactionToast('error', message);
+  const notifyTransactionError = useCallback((message = 'Transaction failed', loadingToastId = null) => {
+    // Dismiss the loading toast if provided
+    if (loadingToastId) {
+      toast.dismiss(loadingToastId);
+    }
+    return showTransactionToast('error', message);
   }, [showTransactionToast]);
 
   const extractTxHashFromResponse = useCallback((responseText) => {
@@ -71,11 +73,21 @@ export const useTransactionNotification = () => {
     return null;
   }, []);
 
+  const dismissToast = useCallback((toastId) => {
+    toast.dismiss(toastId);
+  }, []);
+
+  const dismissAllToasts = useCallback(() => {
+    toast.dismiss();
+  }, []);
+
   return {
     showTransactionToast,
     notifyTransactionSubmitted,
     notifyTransactionSuccess,
     notifyTransactionError,
-    extractTxHashFromResponse
+    extractTxHashFromResponse,
+    dismissToast,
+    dismissAllToasts
   };
 };

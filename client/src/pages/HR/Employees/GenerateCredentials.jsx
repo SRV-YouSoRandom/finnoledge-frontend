@@ -1,11 +1,11 @@
 // client/src/pages/HR/Employees/GenerateCredentials.jsx
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { api } from '../../../services/api';
+import { api, cli } from '../../../services/api';
 import { IconArrowLeft, IconKey, IconCopy, IconRefresh, IconEye, IconEyeOff, IconInfo } from '@tabler/icons-react';
 import toast from 'react-hot-toast';
 
-function GenerateCredentials() {
+function GenerateCredentials({ user }) {
   const { employeeId } = useParams();
   const [employee, setEmployee] = useState(null);
   const [credentials, setCredentials] = useState({
@@ -15,6 +15,7 @@ function GenerateCredentials() {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
     const fetchEmployeeDetails = async () => {
@@ -28,6 +29,7 @@ function GenerateCredentials() {
         generateCredentials(employeeData);
       } catch (error) {
         console.error('Error fetching employee details:', error);
+        toast.error('Failed to load employee details');
       } finally {
         setLoading(false);
       }
@@ -62,12 +64,39 @@ function GenerateCredentials() {
   const regeneratePassword = () => {
     const newPassword = generateRandomPassword();
     setCredentials(prev => ({ ...prev, password: newPassword }));
-    toast.success('New password generated!');
+    toast.success('New password generated!', { duration: 2000 });
+  };
+
+  const updatePasswordInSystem = async () => {
+    if (!credentials.password) {
+      toast.error('No password to update');
+      return;
+    }
+
+    setUpdating(true);
+    const loadingToast = toast.loading('Updating password in system...');
+
+    try {
+      await cli.changePassword({
+        employeeId: parseInt(employeeId),
+        newPassword: credentials.password,
+        user
+      });
+
+      toast.dismiss(loadingToast);
+      toast.success('Password updated successfully in the system!', { duration: 3000 });
+    } catch (error) {
+      console.error('Error updating password:', error);
+      toast.dismiss(loadingToast);
+      toast.error('Failed to update password in system');
+    } finally {
+      setUpdating(false);
+    }
   };
 
   const copyToClipboard = (text, label) => {
     navigator.clipboard.writeText(text).then(() => {
-      toast.success(`${label} copied to clipboard!`);
+      toast.success(`${label} copied to clipboard!`, { duration: 2000 });
     }).catch(() => {
       toast.error('Failed to copy to clipboard');
     });
@@ -90,7 +119,7 @@ IMPORTANT LOGIN INSTRUCTIONS:
 Login at: [Your App URL]`;
 
     navigator.clipboard.writeText(credentialsText).then(() => {
-      toast.success('All credentials copied to clipboard!');
+      toast.success('All credentials copied to clipboard!', { duration: 3000 });
     }).catch(() => {
       toast.error('Failed to copy credentials');
     });
@@ -194,10 +223,20 @@ Login at: [Your App URL]`;
             <IconKey size={20} />
             <span>Login Credentials</span>
           </h2>
-          <button onClick={copyAllCredentials} className="button">
-            <IconCopy size={16} />
-            Copy All Credentials
-          </button>
+          <div className="button-group">
+            <button onClick={copyAllCredentials} className="button button-secondary">
+              <IconCopy size={16} />
+              Copy All Credentials
+            </button>
+            <button 
+              onClick={updatePasswordInSystem} 
+              className="button"
+              disabled={updating}
+            >
+              <IconKey size={16} />
+              {updating ? 'Updating...' : 'Update Password in System'}
+            </button>
+          </div>
         </div>
 
         <div style={{ 
@@ -349,9 +388,17 @@ Login at: [Your App URL]`;
             <IconRefresh size={16} />
             Generate New Password
           </button>
-          <button onClick={copyAllCredentials} className="button">
+          <button onClick={copyAllCredentials} className="button button-secondary">
             <IconCopy size={16} />
             Copy All Credentials
+          </button>
+          <button 
+            onClick={updatePasswordInSystem} 
+            className="button"
+            disabled={updating}
+          >
+            <IconKey size={16} />
+            {updating ? 'Updating...' : 'Update Password in System'}
           </button>
         </div>
       </div>

@@ -26,54 +26,54 @@ function ApplyLeave() {
     }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setSubmitting(true);
-    setError(null);
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setSubmitting(true);
+  setError(null);
 
-    // Validate dates
-    const startDate = new Date(formData.startDate);
-    const endDate = new Date(formData.endDate);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+  // Validate dates
+  const startDate = new Date(formData.startDate);
+  const endDate = new Date(formData.endDate);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
-    if (startDate < today) {
-      setError('Start date cannot be in the past');
-      setSubmitting(false);
-      return;
-    }
+  if (startDate < today) {
+    setError('Start date cannot be in the past');
+    setSubmitting(false);
+    return;
+  }
 
-    if (endDate < startDate) {
-      setError('End date cannot be before start date');
-      setSubmitting(false);
-      return;
-    }
+  if (endDate < startDate) {
+    setError('End date cannot be before start date');
+    setSubmitting(false);
+    return;
+  }
 
-    const toastId = notifyTransactionSubmitted('Submitting leave request...');
+  const loadingToastId = notifyTransactionSubmitted('Submitting leave request...');
 
-    try {
-      const response = await cli.submitLeaveRequest({
-        employeeId: parseInt(user.employeeData.id),
-        startDate: formData.startDate,
-        endDate: formData.endDate,
-        reason: formData.reason,
-        user: user.walletAddress
-      });
-      
-      const txHash = extractTxHashFromResponse(response.data.data || '');
-      notifyTransactionSuccess('Leave request submitted successfully!', txHash);
-      
-      // Success - redirect to leave requests list
-      navigate('/employee/leave-requests');
-    } catch (err) {
-      console.error('Error submitting leave request:', err);
-      const errorMessage = err.response?.data?.message || 'Failed to submit leave request. Please try again.';
-      setError(errorMessage);
-      notifyTransactionError(errorMessage);
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  try {
+    const response = await cli.submitLeaveRequest({
+      employeeId: parseInt(user.employeeData.id),
+      startDate: formData.startDate,
+      endDate: formData.endDate,
+      reason: formData.reason,
+      user: user.walletAddress
+    });
+    
+    const txHash = extractTxHashFromResponse(response.data.data || '');
+    notifyTransactionSuccess('Leave request submitted successfully!', txHash, loadingToastId);
+    
+    // Success - redirect to leave requests list
+    navigate('/employee/leave-requests');
+  } catch (err) {
+    console.error('Error submitting leave request:', err);
+    const errorMessage = err.response?.data?.message || 'Failed to submit leave request. Please try again.';
+    setError(errorMessage);
+    notifyTransactionError(errorMessage, loadingToastId);
+  } finally {
+    setSubmitting(false);
+  }
+};
 
   const calculateDuration = () => {
     if (formData.startDate && formData.endDate) {

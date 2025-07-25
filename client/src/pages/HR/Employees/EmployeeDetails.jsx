@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { api } from '../../../services/api';
-import { IconArrowLeft, IconUsers, IconBriefcase, IconCalendarTime } from '@tabler/icons-react';
+import { IconArrowLeft, IconUsers, IconBriefcase, IconCalendarTime, IconKey } from '@tabler/icons-react';
+
 
 function EmployeeDetails() {
   const { id } = useParams();
@@ -85,10 +86,16 @@ function EmployeeDetails() {
           <IconArrowLeft size={16} />
           <span>Back to Employees</span>
         </Link>
+        <div className="button-group">
+          <Link to={`/hr/generate-credentials/${employee.id}`} className="button">
+            <IconKey size={16} />
+            <span>Generate Credentials</span>
+          </Link>
         <Link to={`/hr/assign-role/${employee.id}`} className="button">
           <IconBriefcase size={16} />
           <span>Assign Role</span>
         </Link>
+        </div>
       </div>
       
       <div className="card">

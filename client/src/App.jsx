@@ -55,6 +55,7 @@ import LeaveRequestList from './pages/HR/LeaveRequests/LeaveRequestList';
 import LeaveRequestDetails from './pages/HR/LeaveRequests/LeaveRequestDetails';
 import CreateLeaveRequest from './pages/HR/LeaveRequests/CreateLeaveRequest';
 import ProcessLeaveRequest from './pages/HR/LeaveRequests/ProcessLeaveRequest';
+import GenerateCredentials from './pages/HR/Employees/GenerateCredentials';
 
 // Employee Pages
 import EmployeeDashboard from './pages/Employee/EmployeeDashboard';
@@ -127,6 +128,7 @@ function AppContent() {
               <Route path="/hr/leave-requests/:id" element={<LeaveRequestDetails />} />
               <Route path="/hr/create-leave-request" element={<CreateLeaveRequest user={user.walletAddress} />} />
               <Route path="/hr/process-leave-request/:requestId" element={<ProcessLeaveRequest user={user.walletAddress} />} />
+              <Route path="/hr/generate-credentials/:employeeId" element={<GenerateCredentials user={user.walletAddress} />} />
 
               {/* Reports */}
               <Route path="/balance-sheet" element={<BalanceSheet />} />
