@@ -1,13 +1,15 @@
+// client/src/pages/HR/Employees/GenerateCredentials.jsx
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { api } from '../../../services/api';
-import { IconArrowLeft, IconKey, IconCopy, IconRefresh, IconEye, IconEyeOff } from '@tabler/icons-react';
+import { IconArrowLeft, IconKey, IconCopy, IconRefresh, IconEye, IconEyeOff, IconInfo } from '@tabler/icons-react';
 import toast from 'react-hot-toast';
 
 function GenerateCredentials() {
   const { employeeId } = useParams();
   const [employee, setEmployee] = useState(null);
   const [credentials, setCredentials] = useState({
+    systemId: '',
     address: '',
     password: ''
   });
@@ -41,7 +43,11 @@ function GenerateCredentials() {
     // Generate a random password
     const password = generateRandomPassword();
     
-    setCredentials({ address, password });
+    setCredentials({ 
+      systemId: employeeData.id.toString(), // This is the login ID (0, 1, 2...)
+      address, 
+      password 
+    });
   };
 
   const generateRandomPassword = () => {
@@ -72,10 +78,15 @@ function GenerateCredentials() {
     
 Employee: ${employee.name}
 Employee ID: ${employee.employeeId}
-Login Address: ${credentials.address}
+System Login ID: ${credentials.systemId}
+Generated Address: ${credentials.address}
 Temporary Password: ${credentials.password}
 
-Please change your password after first login.
+IMPORTANT LOGIN INSTRUCTIONS:
+- Use System Login ID: ${credentials.systemId}
+- Use Password: ${credentials.password}
+- Please change your password after first login.
+
 Login at: [Your App URL]`;
 
     navigator.clipboard.writeText(credentialsText).then(() => {
@@ -114,7 +125,7 @@ Login at: [Your App URL]`;
               </div>
             </div>
             <div className="detail-item">
-              <div className="detail-label">Employee ID</div>
+              <div className="detail-label">Employee ID (HR Assigned)</div>
               <div className="detail-value">
                 <code style={{ 
                   backgroundColor: 'rgba(0,0,0,0.05)', 
@@ -127,6 +138,21 @@ Login at: [Your App URL]`;
               </div>
             </div>
             <div className="detail-item">
+              <div className="detail-label">System ID (Login ID)</div>
+              <div className="detail-value">
+                <code style={{ 
+                  backgroundColor: 'rgba(26, 115, 232, 0.1)', 
+                  padding: '4px 8px', 
+                  borderRadius: '4px',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  color: 'var(--primary-color)'
+                }}>
+                  {credentials.systemId}
+                </code>
+              </div>
+            </div>
+            <div className="detail-item">
               <div className="detail-label">Position</div>
               <div className="detail-value">{employee.position}</div>
             </div>
@@ -134,6 +160,30 @@ Login at: [Your App URL]`;
               <div className="detail-label">Contact Info</div>
               <div className="detail-value">{employee.contactInfo}</div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Important Notice */}
+      <div style={{
+        padding: '20px',
+        backgroundColor: 'rgba(26, 115, 232, 0.1)',
+        border: '2px solid rgba(26, 115, 232, 0.3)',
+        borderRadius: '8px',
+        marginBottom: '24px'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+          <IconInfo size={24} style={{ color: 'var(--primary-color)', marginTop: '2px' }} />
+          <div>
+            <h3 style={{ margin: '0 0 8px 0', color: 'var(--primary-color)' }}>
+              Important: Employee Login Instructions
+            </h3>
+            <ul style={{ margin: '0', paddingLeft: '16px', color: 'var(--text-color)' }}>
+              <li><strong>Login ID:</strong> Employee must use System ID: <code style={{ backgroundColor: 'rgba(26, 115, 232, 0.2)', padding: '2px 4px', borderRadius: '3px' }}>{credentials.systemId}</code></li>
+              <li><strong>Password:</strong> Use the generated password below</li>
+              <li><strong>Not the HR assigned Employee ID:</strong> <code>{employee.employeeId}</code></li>
+              <li>The system ID is auto-generated (0, 1, 2...) based on employee creation order</li>
+            </ul>
           </div>
         </div>
       </div>
@@ -152,14 +202,14 @@ Login at: [Your App URL]`;
 
         <div style={{ 
           padding: '24px', 
-          backgroundColor: 'rgba(26, 115, 232, 0.05)', 
-          border: '2px solid rgba(26, 115, 232, 0.2)', 
+          backgroundColor: 'rgba(52, 168, 83, 0.05)', 
+          border: '2px solid rgba(52, 168, 83, 0.2)', 
           borderRadius: '8px',
           marginBottom: '24px'
         }}>
           <h3 style={{ 
             margin: '0 0 16px 0', 
-            color: 'var(--primary-color)',
+            color: '#34a853',
             display: 'flex',
             alignItems: 'center',
             gap: '8px'
@@ -170,30 +220,35 @@ Login at: [Your App URL]`;
           
           <div className="detail-grid">
             <div className="detail-item">
-              <div className="detail-label">Login Address</div>
+              <div className="detail-label">Login ID (System ID)</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <code style={{ 
+                <div style={{ 
                   backgroundColor: 'white', 
-                  padding: '8px 12px', 
+                  padding: '12px 16px', 
                   borderRadius: '4px',
-                  fontSize: '14px',
+                  fontSize: '18px',
                   fontFamily: 'monospace',
-                  border: '1px solid #dadce0',
+                  fontWeight: '600',
+                  border: '2px solid #34a853',
+                  color: '#34a853',
                   flex: 1
                 }}>
-                  {credentials.address}
-                </code>
+                  {credentials.systemId}
+                </div>
                 <button 
-                  onClick={() => copyToClipboard(credentials.address, 'Address')}
+                  onClick={() => copyToClipboard(credentials.systemId, 'Login ID')}
                   className="button-icon"
                 >
                   <IconCopy size={16} />
                 </button>
               </div>
+              <div style={{ fontSize: '12px', color: '#34a853', marginTop: '4px', fontWeight: '500' }}>
+                ← This is what the employee uses to login
+              </div>
             </div>
             
             <div className="detail-item">
-              <div className="detail-label">Temporary Password</div>
+              <div className="detail-label">Generated Password</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <div style={{ position: 'relative', flex: 1 }}>
                   <code style={{ 
@@ -240,6 +295,33 @@ Login at: [Your App URL]`;
                 </button>
               </div>
             </div>
+
+            <div className="detail-item">
+              <div className="detail-label">Generated System Address</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <code style={{ 
+                  backgroundColor: 'white', 
+                  padding: '8px 12px', 
+                  borderRadius: '4px',
+                  fontSize: '12px',
+                  fontFamily: 'monospace',
+                  border: '1px solid #dadce0',
+                  flex: 1,
+                  wordBreak: 'break-all'
+                }}>
+                  {credentials.address}
+                </code>
+                <button 
+                  onClick={() => copyToClipboard(credentials.address, 'Address')}
+                  className="button-icon"
+                >
+                  <IconCopy size={16} />
+                </button>
+              </div>
+              <div style={{ fontSize: '11px', color: 'var(--secondary-color)', marginTop: '4px' }}>
+                Internal system address (not used for login)
+              </div>
+            </div>
           </div>
         </div>
 
@@ -251,13 +333,14 @@ Login at: [Your App URL]`;
           marginBottom: '24px'
         }}>
           <h4 style={{ margin: '0 0 8px 0', color: '#856404' }}>
-            ⚠️ Important Instructions
+            ⚠️ Important Instructions for Employee
           </h4>
           <ul style={{ margin: '0', paddingLeft: '20px', color: '#856404' }}>
-            <li>Share these credentials securely with the employee</li>
-            <li>Employee should change the password after first login</li>
-            <li>Login address is permanent and cannot be changed</li>
-            <li>Store these credentials safely until employee confirms login</li>
+            <li><strong>Login ID:</strong> Use only the System ID: <code>{credentials.systemId}</code></li>
+            <li><strong>Password:</strong> Use the generated password above</li>
+            <li><strong>Do NOT use:</strong> HR Employee ID ({employee.employeeId}) or wallet address</li>
+            <li>Change password after first successful login</li>
+            <li>Contact HR if you have trouble logging in</li>
           </ul>
         </div>
 

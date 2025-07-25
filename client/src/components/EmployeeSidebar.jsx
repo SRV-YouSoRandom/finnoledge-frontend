@@ -1,3 +1,4 @@
+// client/src/components/EmployeeSidebar.jsx
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { 
@@ -37,7 +38,10 @@ function EmployeeSidebar() {
           Welcome, {user?.employeeData?.name || 'Employee'}
         </div>
         <div style={{ fontSize: '11px', opacity: '0.8' }}>
-          ID: {user?.employeeData?.employeeId}
+          System ID: <strong>{user?.systemId || user?.employeeData?.id}</strong>
+        </div>
+        <div style={{ fontSize: '11px', opacity: '0.8' }}>
+          Employee ID: {user?.employeeData?.employeeId}
         </div>
         <div style={{ fontSize: '11px', opacity: '0.8' }}>
           Role: {user?.employeeData?.role}

@@ -1,6 +1,7 @@
+// client/src/pages/Employee/EmployeeProfile.jsx
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { IconUser, IconSettings, IconBriefcase } from '@tabler/icons-react';
+import { IconUser, IconSettings, IconBriefcase, IconKey } from '@tabler/icons-react';
 
 function EmployeeProfile() {
   const { user } = useAuth();
@@ -44,7 +45,25 @@ function EmployeeProfile() {
           <h2>Personal Information</h2>
           <div className="detail-grid">
             <div className="detail-item">
-              <div className="detail-label">Employee ID</div>
+              <div className="detail-label">System Login ID</div>
+              <div className="detail-value">
+                <code style={{ 
+                  backgroundColor: 'rgba(26, 115, 232, 0.1)', 
+                  padding: '8px 12px', 
+                  borderRadius: '4px',
+                  fontSize: '18px',
+                  fontWeight: '600',
+                  color: 'var(--primary-color)'
+                }}>
+                  {user?.systemId || user?.employeeData?.id}
+                </code>
+                <div style={{ fontSize: '12px', color: 'var(--secondary-color)', marginTop: '4px' }}>
+                  Use this ID to login
+                </div>
+              </div>
+            </div>
+            <div className="detail-item">
+              <div className="detail-label">HR Employee ID</div>
               <div className="detail-value">
                 <code style={{ 
                   backgroundColor: 'rgba(0,0,0,0.05)', 
@@ -54,6 +73,9 @@ function EmployeeProfile() {
                 }}>
                   {user?.employeeData?.employeeId}
                 </code>
+                <div style={{ fontSize: '12px', color: 'var(--secondary-color)', marginTop: '4px' }}>
+                  HR assigned ID (not for login)
+                </div>
               </div>
             </div>
             <div className="detail-item">
@@ -96,7 +118,7 @@ function EmployeeProfile() {
           <h2>Account Information</h2>
           <div className="detail-grid">
             <div className="detail-item">
-              <div className="detail-label">Login Address</div>
+              <div className="detail-label">System Address</div>
               <div className="detail-value">
                 <code style={{ 
                   backgroundColor: 'rgba(0,0,0,0.05)', 
@@ -107,6 +129,9 @@ function EmployeeProfile() {
                 }}>
                   {user?.walletAddress}
                 </code>
+                <div style={{ fontSize: '12px', color: 'var(--secondary-color)', marginTop: '4px' }}>
+                  Internal system address
+                </div>
               </div>
             </div>
             <div className="detail-item">
@@ -119,6 +144,33 @@ function EmployeeProfile() {
               <div className="detail-label">Last Login</div>
               <div className="detail-value">
                 {user?.loginTime ? new Date(user.loginTime).toLocaleString() : 'Current session'}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Login Instructions */}
+        <div className="detail-section">
+          <h2>Login Information</h2>
+          <div style={{
+            padding: '20px',
+            backgroundColor: 'rgba(26, 115, 232, 0.05)',
+            border: '1px solid rgba(26, 115, 232, 0.2)',
+            borderRadius: '8px'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+              <IconKey size={20} style={{ color: 'var(--primary-color)' }} />
+              <h3 style={{ margin: '0', color: 'var(--primary-color)' }}>Your Login Credentials</h3>
+            </div>
+            <div style={{ display: 'grid', gap: '12px' }}>
+              <div>
+                <strong>Login ID:</strong> <code style={{ backgroundColor: 'rgba(26, 115, 232, 0.2)', padding: '2px 6px', borderRadius: '3px' }}>{user?.systemId || user?.employeeData?.id}</code>
+              </div>
+              <div>
+                <strong>Password:</strong> Use the password provided by HR (can be changed below)
+              </div>
+              <div style={{ fontSize: '12px', color: 'var(--secondary-color)' }}>
+                <strong>Note:</strong> Always use your System Login ID, not the HR Employee ID
               </div>
             </div>
           </div>

@@ -1,3 +1,4 @@
+// client/src/services/api.js
 import axios from 'axios';
 
 // REST API base URL
@@ -86,6 +87,9 @@ const cli = {
   // HR - Leave Requests
   submitLeaveRequest: (data) => axios.post(`${SERVER_URL}/hr/leave-requests`, data),
   processLeaveRequest: (data) => axios.post(`${SERVER_URL}/hr/process-leave-request`, data),
+  
+  // HR - Authentication
+  changePassword: (data) => axios.post(`${SERVER_URL}/hr/change-password`, data),
 };
 
 export { api, cli };

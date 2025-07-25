@@ -1,3 +1,4 @@
+// client/src/components/Login.jsx
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { IconUser, IconKey, IconEye, IconEyeOff } from '@tabler/icons-react';
@@ -6,10 +7,10 @@ import toast from 'react-hot-toast';
 function Login() {
   const { login, loading } = useAuth();
   const [formData, setFormData] = useState({
-    walletAddress: '',
-    privateKey: ''
+    loginId: '',
+    password: ''
   });
-  const [showPrivateKey, setShowPrivateKey] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
 
   const handleChange = (e) => {
@@ -25,16 +26,17 @@ function Login() {
     e.preventDefault();
     setError('');
 
-    if (!formData.walletAddress.trim()) {
-      setError('Wallet address is required');
+    if (!formData.loginId.trim()) {
+      setError('Login ID is required');
       return;
     }
 
     try {
-      const result = await login(formData.walletAddress.trim(), formData.privateKey.trim());
+      const result = await login(formData.loginId.trim(), formData.password.trim());
       
       if (result.success) {
-        toast.success(`Welcome! Logged in as ${result.user.role}`, {
+        const userType = result.user.role === 'admin' ? 'Administrator' : 'Employee';
+        toast.success(`Welcome! Logged in as ${userType}`, {
           duration: 3000,
           position: 'bottom-right'
         });
@@ -51,28 +53,28 @@ function Login() {
   const demoAccounts = [
     { 
       label: 'Admin Demo', 
-      address: 'bob', 
-      key: 'demo-key',
+      loginId: 'bob', 
+      password: 'demo-key',
       description: 'Full admin access' 
     },
     { 
-      label: 'Employee Demo', 
-      address: 'emp_EMP001_0', 
-      key: 'temp123',
-      description: 'Employee access (use after creating employee)' 
+      label: 'Employee Demo (ID: 0)', 
+      loginId: '0', 
+      password: 'temp123',
+      description: 'First employee account (if exists)' 
     },
     { 
-      label: 'Test Employee', 
-      address: 'emp_test_employee', 
-      key: 'test123',
-      description: 'Test employee account' 
+      label: 'Employee Demo (ID: 1)', 
+      loginId: '1', 
+      password: 'temp123',
+      description: 'Second employee account (if exists)' 
     }
   ];
 
   const fillDemoAccount = (account) => {
     setFormData({
-      walletAddress: account.address,
-      privateKey: account.key
+      loginId: account.loginId,
+      password: account.password
     });
   };
 
@@ -87,7 +89,7 @@ function Login() {
     }}>
       <div style={{
         width: '100%',
-        maxWidth: '400px',
+        maxWidth: '450px',
         backgroundColor: 'var(--card-bg)',
         borderRadius: 'var(--border-radius)',
         boxShadow: 'var(--box-shadow)',
@@ -119,43 +121,47 @@ function Login() {
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="walletAddress" className="form-label">
+            <label htmlFor="loginId" className="form-label">
               <IconUser size={16} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
-              Wallet Address
+              Login ID
             </label>
             <input
               type="text"
-              id="walletAddress"
-              name="walletAddress"
+              id="loginId"
+              name="loginId"
               className="form-input"
-              value={formData.walletAddress}
+              value={formData.loginId}
               onChange={handleChange}
               required
-              placeholder="Enter your wallet address"
+              placeholder="Admin: wallet address | Employee: system ID (0, 1, 2...)"
               autoComplete="username"
             />
+            <span className="form-hint">
+              <strong>Admins:</strong> Use wallet address (e.g., bob) |{' '}
+              <strong>Employees:</strong> Use your system ID (0, 1, 2...)
+            </span>
           </div>
 
           <div className="form-group">
-            <label htmlFor="privateKey" className="form-label">
+            <label htmlFor="password" className="form-label">
               <IconKey size={16} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
-              Private Key / Password
+              Password
             </label>
             <div style={{ position: 'relative' }}>
               <input
-                type={showPrivateKey ? 'text' : 'password'}
-                id="privateKey"
-                name="privateKey"
+                type={showPassword ? 'text' : 'password'}
+                id="password"
+                name="password"
                 className="form-input"
-                value={formData.privateKey}
+                value={formData.password}
                 onChange={handleChange}
-                placeholder="Enter your private key or password"
+                placeholder="Enter your password"
                 autoComplete="current-password"
                 style={{ paddingRight: '40px' }}
               />
               <button
                 type="button"
-                onClick={() => setShowPrivateKey(!showPrivateKey)}
+                onClick={() => setShowPassword(!showPassword)}
                 style={{
                   position: 'absolute',
                   right: '10px',
@@ -168,11 +174,11 @@ function Login() {
                   padding: '4px'
                 }}
               >
-                {showPrivateKey ? <IconEyeOff size={16} /> : <IconEye size={16} />}
+                {showPassword ? <IconEyeOff size={16} /> : <IconEye size={16} />}
               </button>
             </div>
             <span className="form-hint">
-              For employees: use your generated address and password
+              Employees: Use password generated by HR after offer acceptance
             </span>
           </div>
 
@@ -225,9 +231,30 @@ function Login() {
                 <div style={{ fontSize: '12px', opacity: '0.8' }}>
                   {account.description}
                 </div>
+                <div style={{ fontSize: '11px', opacity: '0.7', marginTop: '2px' }}>
+                  ID: {account.loginId} | Password: {account.password}
+                </div>
               </button>
             ))}
           </div>
+        </div>
+
+        {/* Instructions */}
+        <div style={{ 
+          marginTop: '24px', 
+          padding: '16px', 
+          backgroundColor: 'rgba(26, 115, 232, 0.05)', 
+          borderRadius: '8px',
+          border: '1px solid rgba(26, 115, 232, 0.2)'
+        }}>
+          <h4 style={{ margin: '0 0 8px 0', color: 'var(--primary-color)', fontSize: '14px' }}>
+            Login Instructions:
+          </h4>
+          <ul style={{ margin: '0', paddingLeft: '16px', fontSize: '12px', color: 'var(--secondary-color)' }}>
+            <li><strong>Administrators:</strong> Use your wallet address (e.g., "bob") and private key</li>
+            <li><strong>Employees:</strong> Use your system ID (0, 1, 2...) and HR-generated password</li>
+            <li>Contact HR if you don't have your login credentials</li>
+          </ul>
         </div>
       </div>
     </div>

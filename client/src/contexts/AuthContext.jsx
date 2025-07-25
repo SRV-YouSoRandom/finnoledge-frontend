@@ -1,3 +1,4 @@
+// client/src/contexts/AuthContext.jsx
 import { createContext, useContext, useState, useEffect } from 'react';
 import { api } from '../services/api';
 
@@ -30,7 +31,7 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
-  const login = async (walletAddress, privateKey) => {
+  const login = async (loginId, password) => {
     try {
       setLoading(true);
 
@@ -44,63 +45,106 @@ export const AuthProvider = ({ children }) => {
       let userRole = 'employee';
       let employeeData = null;
 
-      if (adminAddresses.includes(walletAddress)) {
+      // Check if admin first
+      if (adminAddresses.includes(loginId)) {
         userRole = 'admin';
-      } else {
-        // Check if this address belongs to an employee
-        try {
-          // For demo purposes, if the address starts with "emp_", treat as employee
-          if (walletAddress.startsWith('emp_')) {
-            const employeesResponse = await api.fetchEmployees();
-            const employees = employeesResponse.data.Employee || [];
-            
-            // For demo, find employee by matching part of the address
-            // In real implementation, you'd use the UserAuth lookup
-            employeeData = employees.find(emp => 
-              walletAddress.includes(emp.employeeId) || 
-              employees.length > 0 // For demo, use first employee if available
-            ) || employees[0]; // Use first employee for demo
-            
-            if (employeeData) {
-              userRole = 'employee';
-            }
-          } else {
-            // Try to find by UserAuth if implemented
-            try {
-              const userAuthResponse = await api.fetchUserAuths();
-              const userAuths = userAuthResponse.data.UserAuth || [];
-              const userAuth = userAuths.find(auth => auth.address === walletAddress);
-              
-              if (userAuth) {
-                const employeesResponse = await api.fetchEmployees();
-                const employees = employeesResponse.data.Employee || [];
-                employeeData = employees.find(emp => emp.id.toString() === userAuth.employeeId.toString());
-                
-                if (employeeData) {
-                  userRole = 'employee';
-                }
-              }
-            } catch (authError) {
-              console.log('UserAuth not available, using demo mode');
-            }
-          }
-        } catch (error) {
-          console.log('Error checking employee status:', error);
-        }
+        
+        const userData = {
+          walletAddress: loginId,
+          privateKey: password || loginId,
+          role: userRole,
+          employeeData: null,
+          loginTime: new Date().toISOString()
+        };
+
+        setUser(userData);
+        sessionStorage.setItem('erpUser', JSON.stringify(userData));
+        
+        return { success: true, user: userData };
       }
 
-      const userData = {
-        walletAddress,
-        privateKey: privateKey || walletAddress, // For simplicity, using wallet address as key if not provided
-        role: userRole,
-        employeeData: employeeData,
-        loginTime: new Date().toISOString()
-      };
+      // For employees, check if loginId is a number (employee system ID)
+      const employeeSystemId = parseInt(loginId);
+      if (isNaN(employeeSystemId)) {
+        return { 
+          success: false, 
+          error: 'Invalid login credentials. Please use your employee ID (0, 1, 2...) and password.' 
+        };
+      }
 
-      setUser(userData);
-      sessionStorage.setItem('erpUser', JSON.stringify(userData));
-      
-      return { success: true, user: userData };
+      try {
+        // Fetch all employees and user auth records
+        const [employeesResponse, userAuthsResponse] = await Promise.all([
+          api.fetchEmployees(),
+          api.fetchUserAuths().catch(() => ({ data: { UserAuth: [] } })) // Handle if UserAuth doesn't exist yet
+        ]);
+
+        const employees = employeesResponse.data.Employee || [];
+        const userAuths = userAuthsResponse.data.UserAuth || [];
+
+        // Find employee by system ID (the auto-incremented ID from blockchain)
+        const employee = employees.find(emp => emp.id.toString() === employeeSystemId.toString());
+        
+        if (!employee) {
+          return { 
+            success: false, 
+            error: `No employee found with ID ${employeeSystemId}. Please contact HR.` 
+          };
+        }
+
+        // Find the corresponding user auth record
+        const userAuth = userAuths.find(auth => 
+          auth.employeeId.toString() === employee.id.toString()
+        );
+
+        if (!userAuth) {
+          return { 
+            success: false, 
+            error: 'Authentication record not found. Please contact HR to generate your credentials.' 
+          };
+        }
+
+        // Verify password
+        if (userAuth.password !== password) {
+          return { 
+            success: false, 
+            error: 'Invalid password. Please check your credentials or contact HR.' 
+          };
+        }
+
+        // Check if account is active
+        if (userAuth.status !== 'Active') {
+          return { 
+            success: false, 
+            error: `Account is ${userAuth.status.toLowerCase()}. Please contact HR.` 
+          };
+        }
+
+        userRole = 'employee';
+        employeeData = employee;
+
+        const userData = {
+          walletAddress: userAuth.address, // Use the generated address from UserAuth
+          privateKey: password,
+          role: userRole,
+          employeeData: employeeData,
+          systemId: employee.id, // Store the system ID for reference
+          loginTime: new Date().toISOString()
+        };
+
+        setUser(userData);
+        sessionStorage.setItem('erpUser', JSON.stringify(userData));
+        
+        return { success: true, user: userData };
+
+      } catch (error) {
+        console.error('Error during employee authentication:', error);
+        return { 
+          success: false, 
+          error: 'Unable to verify credentials. Please try again or contact HR.' 
+        };
+      }
+
     } catch (error) {
       console.error('Login error:', error);
       return { success: false, error: error.message };
