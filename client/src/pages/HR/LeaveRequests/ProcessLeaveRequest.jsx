@@ -1,3 +1,5 @@
+// client/src/pages/HR/LeaveRequests/ProcessLeaveRequest.jsx - FIXED for exact ignite scaffolding
+
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { api, cli } from '../../../services/api';
@@ -63,15 +65,52 @@ function ProcessLeaveRequest({ user }) {
     setSubmitting(true);
     setError(null);
 
+    // Determine the new status based on action
     const newStatus = action === 'approve' ? 'Approved' : 'Rejected';
     const loadingToastId = notifyTransactionSubmitted(`${action === 'approve' ? 'Approving' : 'Rejecting'} leave request...`);
 
     try {
-      const response = await cli.processLeaveRequest({
+      console.log('Processing leave request:', {
         requestId: parseInt(requestId),
         newStatus,
         user
       });
+
+      // FIXED: Validate requestId is a valid number
+      const reqId = parseInt(requestId);
+      if (isNaN(reqId) || reqId < 0) {
+        throw new Error('Invalid request ID');
+      }
+
+      // FIXED: Based on exact ignite scaffolding format
+      // ignite scaffold message ProcessLeaveRequest requestId:uint newStatus:string
+      // Command: rollkit tx hr process-leave-request requestId newStatus
+      const requestData = {
+        requestId: reqId,        // Request ID as uint (0, 1, 2...) - REQUIRED
+        newStatus: newStatus,    // Status string ("Approved" or "Rejected") - REQUIRED
+        user: user              // Wallet address for --from parameter
+      };
+
+      console.log('Sending process request data to API:', requestData);
+
+      // Validate all required fields
+      if (requestData.requestId === undefined || requestData.requestId === null) {
+        throw new Error('Request ID is missing');
+      }
+
+      if (!requestData.newStatus) {
+        throw new Error('New status is missing');
+      }
+
+      // Validate status values
+      const validStatuses = ['Approved', 'Rejected'];
+      if (!validStatuses.includes(requestData.newStatus)) {
+        throw new Error(`Invalid status. Must be one of: ${validStatuses.join(', ')}`);
+      }
+
+      const response = await cli.processLeaveRequest(requestData);
+      
+      console.log('Process leave request response:', response);
       
       const txHash = extractTxHashFromResponse(response.data.data || '');
       notifyTransactionSuccess(`Leave request ${newStatus.toLowerCase()} successfully!`, txHash, loadingToastId);
@@ -80,7 +119,18 @@ function ProcessLeaveRequest({ user }) {
       navigate('/hr/leave-requests');
     } catch (err) {
       console.error('Error processing leave request:', err);
-      const errorMessage = err.response?.data?.message || 'Failed to process leave request. Please try again.';
+      
+      // Extract the actual error message
+      let errorMessage = 'Failed to process leave request. Please try again.';
+      
+      if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.response?.data?.error) {
+        errorMessage = err.response.data.error;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
       setError(errorMessage);
       notifyTransactionError(errorMessage, loadingToastId);
     } finally {
@@ -128,12 +178,32 @@ function ProcessLeaveRequest({ user }) {
       </div>
       
       <div className="card">
+        <div style={{ marginBottom: '24px', padding: '16px', backgroundColor: 'rgba(251, 188, 4, 0.1)', borderRadius: '8px', border: '1px solid rgba(251, 188, 4, 0.3)' }}>
+          <h3 style={{ margin: '0 0 8px 0', color: '#856404' }}>
+            ⚠️ Processing Request ID: {requestId}
+          </h3>
+          <div style={{ fontSize: '14px', color: '#856404' }}>
+            <strong>Note:</strong> This will execute the command: <code>rollkit tx hr process-leave-request {requestId} "{action === 'approve' ? 'Approved' : 'Rejected'}"</code>
+          </div>
+        </div>
+        
         <div className="detail-section">
           <h2>Leave Request Summary</h2>
           <div className="detail-grid">
             <div className="detail-item">
               <div className="detail-label">Request ID</div>
-              <div className="detail-value">{leaveRequest.id}</div>
+              <div className="detail-value">
+                <code style={{ 
+                  backgroundColor: 'rgba(26, 115, 232, 0.1)', 
+                  padding: '4px 8px', 
+                  borderRadius: '4px',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  color: 'var(--primary-color)'
+                }}>
+                  {leaveRequest.id}
+                </code>
+              </div>
             </div>
             <div className="detail-item">
               <div className="detail-label">Employee System ID</div>
@@ -216,7 +286,7 @@ function ProcessLeaveRequest({ user }) {
         
         {error && (
           <div className="error-message">
-            {error}
+            <strong>Error:</strong> {error}
           </div>
         )}
         
@@ -252,6 +322,9 @@ function ProcessLeaveRequest({ user }) {
                     <div style={{ fontSize: '14px', color: '#3c4043' }}>
                       Grant the leave request
                     </div>
+                    <div style={{ fontSize: '12px', color: '#6c757d', marginTop: '4px' }}>
+                      Will set status to "Approved"
+                    </div>
                   </div>
                 </div>
               </div>
@@ -284,9 +357,19 @@ function ProcessLeaveRequest({ user }) {
                     <div style={{ fontSize: '14px', color: '#3c4043' }}>
                       Deny the leave request
                     </div>
+                    <div style={{ fontSize: '12px', color: '#6c757d', marginTop: '4px' }}>
+                      Will set status to "Rejected"
+                    </div>
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+          
+          <div style={{ marginBottom: '20px', padding: '16px', backgroundColor: 'rgba(52, 168, 83, 0.05)', borderRadius: '8px', border: '1px solid rgba(52, 168, 83, 0.2)' }}>
+            <h4 style={{ margin: '0 0 8px 0', color: '#34a853' }}>Command Preview:</h4>
+            <div style={{ fontSize: '14px', color: '#137333', fontFamily: 'monospace', backgroundColor: 'rgba(255,255,255,0.7)', padding: '8px', borderRadius: '4px' }}>
+              rollkit tx hr process-leave-request {requestId} "{action === 'approve' ? 'Approved' : 'Rejected'}" --from {user} --chain-id erprollup -y --fees 5stake
             </div>
           </div>
           

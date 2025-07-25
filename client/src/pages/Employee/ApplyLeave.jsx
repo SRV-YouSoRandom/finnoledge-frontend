@@ -1,3 +1,5 @@
+// client/src/pages/Employee/ApplyLeave.jsx - FIXED for exact ignite scaffolding
+
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -68,8 +70,8 @@ const handleSubmit = async (e) => {
   const loadingToastId = notifyTransactionSubmitted('Submitting leave request...');
 
   try {
-    // Get the system ID for this employee
-    // The systemId is the blockchain-generated ID that CLI commands expect
+    // CRITICAL: Get the system ID (0, 1, 2...) - this is the auto-generated blockchain ID
+    // NOT the HR Employee ID (EMP001, EMP123...)
     const systemEmployeeId = user.systemId || user.employeeData?.id;
     
     if (systemEmployeeId === undefined || systemEmployeeId === null) {
@@ -83,16 +85,32 @@ const handleSubmit = async (e) => {
       reason: formData.reason
     });
     
-    // Prepare the request data
+    // FIXED: Based on exact ignite scaffolding format
+    // ignite scaffold message SubmitLeaveRequest employeeId:uint startDate endDate reason
+    // Command: rollkit tx hr submit-leave-request employeeId startDate endDate reason
     const requestData = {
-      employeeId: parseInt(systemEmployeeId), // Ensure it's a number
-      startDate: formData.startDate, // Should be in YYYY-MM-DD format
-      endDate: formData.endDate,     // Should be in YYYY-MM-DD format
-      reason: formData.reason.trim(),
-      user: user.walletAddress || 'bob' // Use actual wallet address
+      employeeId: parseInt(systemEmployeeId), // System ID (0, 1, 2...) - REQUIRED as uint
+      startDate: formData.startDate,          // Date in YYYY-MM-DD format - REQUIRED
+      endDate: formData.endDate,              // Date in YYYY-MM-DD format - REQUIRED  
+      reason: formData.reason.trim(),         // Reason string - REQUIRED
+      user: user.walletAddress || 'bob'       // Wallet address for --from parameter
     };
     
-    console.log('Sending request data:', requestData);
+    console.log('Sending request data to API:', requestData);
+    
+    // Validate all required fields before sending
+    if (requestData.employeeId === undefined || requestData.employeeId === null) {
+      throw new Error('Employee system ID is missing');
+    }
+    
+    if (!requestData.startDate || !requestData.endDate || !requestData.reason) {
+      throw new Error('All fields are required: startDate, endDate, reason');
+    }
+    
+    // Validate employeeId is a valid number
+    if (isNaN(requestData.employeeId) || requestData.employeeId < 0) {
+      throw new Error('Invalid employee system ID');
+    }
     
     const response = await cli.submitLeaveRequest(requestData);
     
@@ -187,13 +205,13 @@ const handleSubmit = async (e) => {
           </h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', fontSize: '14px' }}>
             <div><strong>Name:</strong> {user?.employeeData?.name}</div>
-            <div><strong>Employee ID:</strong> {user?.employeeData?.employeeId}</div>
-            <div><strong>System ID:</strong> <code style={{ backgroundColor: 'rgba(26, 115, 232, 0.1)', padding: '2px 4px', borderRadius: '3px', fontWeight: '600' }}>{user?.systemId || user?.employeeData?.id}</code></div>
+            <div><strong>HR Employee ID:</strong> {user?.employeeData?.employeeId}</div>
+            <div><strong>System ID (Login ID):</strong> <code style={{ backgroundColor: 'rgba(26, 115, 232, 0.1)', padding: '2px 4px', borderRadius: '3px', fontWeight: '600' }}>{user?.systemId || user?.employeeData?.id}</code></div>
             <div><strong>Department:</strong> {user?.employeeData?.department || 'Not Assigned'}</div>
             <div><strong>Position:</strong> {user?.employeeData?.position}</div>
           </div>
-          <div style={{ marginTop: '8px', fontSize: '12px', color: 'var(--secondary-color)' }}>
-            <strong>Note:</strong> Leave requests are processed using your System ID ({user?.systemId || user?.employeeData?.id})
+          <div style={{ marginTop: '12px', fontSize: '12px', color: 'var(--secondary-color)', backgroundColor: 'rgba(251, 188, 4, 0.1)', padding: '8px', borderRadius: '4px', border: '1px solid rgba(251, 188, 4, 0.3)' }}>
+            <strong>⚠️ Important:</strong> Leave requests use your <strong>System ID ({user?.systemId || user?.employeeData?.id})</strong> - the auto-generated blockchain ID, NOT your HR Employee ID ({user?.employeeData?.employeeId}).
           </div>
         </div>
 
@@ -267,6 +285,16 @@ const handleSubmit = async (e) => {
             <span className="form-hint">
               Please provide a clear and detailed reason for your leave request (minimum 5 characters)
             </span>
+          </div>
+          
+          <div style={{ marginBottom: '20px', padding: '16px', backgroundColor: 'rgba(52, 168, 83, 0.05)', borderRadius: '8px', border: '1px solid rgba(52, 168, 83, 0.2)' }}>
+            <h4 style={{ margin: '0 0 8px 0', color: '#34a853' }}>Request Summary:</h4>
+            <div style={{ fontSize: '14px', color: '#137333' }}>
+              <div><strong>Employee System ID:</strong> {user?.systemId || user?.employeeData?.id}</div>
+              <div><strong>Leave Period:</strong> {formData.startDate || 'Not selected'} to {formData.endDate || 'Not selected'}</div>
+              <div><strong>Duration:</strong> {calculateDuration()} day{calculateDuration() > 1 ? 's' : ''}</div>
+              <div><strong>Reason:</strong> {formData.reason || 'Not provided'}</div>
+            </div>
           </div>
           
           <div className="form-actions">
