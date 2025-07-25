@@ -1,4 +1,4 @@
-// client/src/pages/HR/LeaveRequests/ProcessLeaveRequest.jsx - FIXED for exact ignite scaffolding
+// client/src/pages/HR/LeaveRequests/ProcessLeaveRequest.jsx - DEBUG VERSION
 
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom';
@@ -18,29 +18,33 @@ function ProcessLeaveRequest({ user }) {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [debugInfo, setDebugInfo] = useState(null);
 
   useEffect(() => {
     const fetchLeaveRequestDetails = async () => {
       try {
         setLoading(true);
+        console.log('=== FETCHING LEAVE REQUEST ===');
+        console.log('Request ID from params:', requestId);
+        
         const response = await api.fetchLeaveRequest(requestId);
         const leaveData = response.data.LeaveRequest;
+        console.log('Leave request data:', leaveData);
         setLeaveRequest(leaveData);
         
-        // Fetch employee details using the employeeId from leave request
-        // IMPORTANT: The employeeId in leave request is the system ID (0, 1, 2...)
+        // Fetch employee details
         try {
           const employeesResponse = await api.fetchEmployees();
           const employees = employeesResponse.data.Employee || [];
+          console.log('All employees:', employees);
           
-          // Find employee by system ID (leaveData.employeeId matches employee.id)
           const requestEmployee = employees.find(emp => 
             emp.id.toString() === leaveData.employeeId.toString()
           );
+          console.log('Found employee for request:', requestEmployee);
           
           if (requestEmployee) {
             setEmployee(requestEmployee);
-            console.log('Found employee for leave request:', requestEmployee);
           } else {
             console.log('No employee found for system ID:', leaveData.employeeId);
           }
@@ -64,74 +68,109 @@ function ProcessLeaveRequest({ user }) {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
+    setDebugInfo(null);
 
-    // Determine the new status based on action
-    const newStatus = action === 'approve' ? 'Approved' : 'Rejected';
-    const loadingToastId = notifyTransactionSubmitted(`${action === 'approve' ? 'Approving' : 'Rejecting'} leave request...`);
+    console.log('=== PROCESS LEAVE REQUEST DEBUG START ===');
+    console.log('URL params requestId:', requestId);
+    console.log('Action:', action);
+    console.log('User:', user);
+    console.log('Leave request:', leaveRequest);
 
     try {
-      console.log('Processing leave request:', {
-        requestId: parseInt(requestId),
-        newStatus,
-        user
-      });
+      const newStatus = action === 'approve' ? 'Approved' : 'Rejected';
+      const loadingToastId = notifyTransactionSubmitted(`${action === 'approve' ? 'Approving' : 'Rejecting'} leave request...`);
 
-      // FIXED: Validate requestId is a valid number
+      // Validate requestId
       const reqId = parseInt(requestId);
+      console.log('Request ID validation:');
+      console.log('- Original requestId:', requestId, typeof requestId);
+      console.log('- Parsed reqId:', reqId, typeof reqId);
+      console.log('- isNaN(reqId):', isNaN(reqId));
+      
       if (isNaN(reqId) || reqId < 0) {
         throw new Error('Invalid request ID');
       }
 
-      // FIXED: Based on exact ignite scaffolding format
-      // ignite scaffold message ProcessLeaveRequest requestId:uint newStatus:string
-      // Command: rollkit tx hr process-leave-request requestId newStatus
+      // Prepare request data
       const requestData = {
-        requestId: reqId,        // Request ID as uint (0, 1, 2...) - REQUIRED
-        newStatus: newStatus,    // Status string ("Approved" or "Rejected") - REQUIRED
-        user: user              // Wallet address for --from parameter
+        requestId: reqId,
+        newStatus: newStatus,
+        user: user
       };
 
-      console.log('Sending process request data to API:', requestData);
+      console.log('Request data prepared:');
+      console.log('- requestId:', requestData.requestId, typeof requestData.requestId);
+      console.log('- newStatus:', requestData.newStatus, typeof requestData.newStatus);
+      console.log('- user:', requestData.user, typeof requestData.user);
+      console.log('- Full request data:', JSON.stringify(requestData, null, 2));
 
       // Validate all required fields
-      if (requestData.requestId === undefined || requestData.requestId === null) {
-        throw new Error('Request ID is missing');
+      const validationErrors = [];
+      if (requestData.requestId === undefined || requestData.requestId === null || isNaN(requestData.requestId)) {
+        validationErrors.push('Request ID is invalid');
       }
-
-      if (!requestData.newStatus) {
-        throw new Error('New status is missing');
-      }
-
-      // Validate status values
+      if (!requestData.newStatus) validationErrors.push('New status is missing');
+      if (!requestData.user) validationErrors.push('User is missing');
+      
       const validStatuses = ['Approved', 'Rejected'];
       if (!validStatuses.includes(requestData.newStatus)) {
-        throw new Error(`Invalid status. Must be one of: ${validStatuses.join(', ')}`);
+        validationErrors.push(`Invalid status: ${requestData.newStatus}`);
+      }
+      
+      if (validationErrors.length > 0) {
+        throw new Error('Validation failed: ' + validationErrors.join(', '));
       }
 
+      console.log('Sending request to API...');
+      
       const response = await cli.processLeaveRequest(requestData);
       
-      console.log('Process leave request response:', response);
+      console.log('=== API RESPONSE ===');
+      console.log('Response status:', response.status);
+      console.log('Response data:', response.data);
       
-      const txHash = extractTxHashFromResponse(response.data.data || '');
-      notifyTransactionSuccess(`Leave request ${newStatus.toLowerCase()} successfully!`, txHash, loadingToastId);
+      // Set debug info for display
+      setDebugInfo({
+        requestData,
+        response: response.data,
+        command: response.data.debug?.command
+      });
       
-      // Success - redirect to leave requests list
-      navigate('/hr/leave-requests');
+      if (response.data.success) {
+        const txHash = extractTxHashFromResponse(response.data.data || '');
+        notifyTransactionSuccess(`Leave request ${newStatus.toLowerCase()} successfully!`, txHash, loadingToastId);
+        
+        setTimeout(() => {
+          navigate('/hr/leave-requests');
+        }, 1500);
+      } else {
+        throw new Error(response.data.message || 'Unknown error occurred');
+      }
+      
     } catch (err) {
-      console.error('Error processing leave request:', err);
+      console.error('=== PROCESS LEAVE REQUEST ERROR ===');
+      console.error('Error object:', err);
+      console.error('Error message:', err.message);
+      console.error('Error response:', err.response);
       
-      // Extract the actual error message
       let errorMessage = 'Failed to process leave request. Please try again.';
+      let debugData = null;
       
-      if (err.response?.data?.message) {
-        errorMessage = err.response.data.message;
-      } else if (err.response?.data?.error) {
-        errorMessage = err.response.data.error;
+      if (err.response?.data) {
+        console.log('Server response data:', err.response.data);
+        errorMessage = err.response.data.message || errorMessage;
+        debugData = err.response.data.debug;
       } else if (err.message) {
         errorMessage = err.message;
       }
       
       setError(errorMessage);
+      setDebugInfo({
+        error: errorMessage,
+        debugData,
+        fullError: err.response?.data || err
+      });
+      
       notifyTransactionError(errorMessage, loadingToastId);
     } finally {
       setSubmitting(false);
@@ -177,13 +216,26 @@ function ProcessLeaveRequest({ user }) {
         </Link>
       </div>
       
+      {/* Debug Information Display */}
+      {debugInfo && (
+        <div className="card" style={{ marginBottom: '24px', backgroundColor: '#f8f9fa' }}>
+          <h4 style={{ margin: '0 0 12px 0', color: '#495057' }}>Debug Information</h4>
+          <pre style={{ fontSize: '12px', maxHeight: '300px', overflow: 'auto', backgroundColor: '#fff', padding: '12px', borderRadius: '4px' }}>
+            {JSON.stringify(debugInfo, null, 2)}
+          </pre>
+        </div>
+      )}
+      
       <div className="card">
         <div style={{ marginBottom: '24px', padding: '16px', backgroundColor: 'rgba(251, 188, 4, 0.1)', borderRadius: '8px', border: '1px solid rgba(251, 188, 4, 0.3)' }}>
           <h3 style={{ margin: '0 0 8px 0', color: '#856404' }}>
             ⚠️ Processing Request ID: {requestId}
           </h3>
           <div style={{ fontSize: '14px', color: '#856404' }}>
-            <strong>Note:</strong> This will execute the command: <code>rollkit tx hr process-leave-request {requestId} "{action === 'approve' ? 'Approved' : 'Rejected'}"</code>
+            <strong>Command Preview:</strong> <code>rollkit tx hr process-leave-request {requestId} "{action === 'approve' ? 'Approved' : 'Rejected'}" --from {user} --chain-id erprollup -y --fees 5stake</code>
+          </div>
+          <div style={{ fontSize: '12px', color: '#856404', marginTop: '8px' }}>
+            <strong>Values:</strong> requestId={requestId} (type: {typeof requestId}), parsed={parseInt(requestId)} (type: {typeof parseInt(requestId)}), action={action}, newStatus={action === 'approve' ? 'Approved' : 'Rejected'}
           </div>
         </div>
         
@@ -241,14 +293,6 @@ function ProcessLeaveRequest({ user }) {
                     </code>
                   </div>
                 </div>
-                <div className="detail-item">
-                  <div className="detail-label">Department</div>
-                  <div className="detail-value">{employee.department || 'Not Assigned'}</div>
-                </div>
-                <div className="detail-item">
-                  <div className="detail-label">Position</div>
-                  <div className="detail-value">{employee.position}</div>
-                </div>
               </>
             )}
             <div className="detail-item">
@@ -272,10 +316,6 @@ function ProcessLeaveRequest({ user }) {
               <div className="detail-value">
                 <span className="badge badge-warning">Pending</span>
               </div>
-            </div>
-            <div className="detail-item">
-              <div className="detail-label">Submitted By</div>
-              <div className="detail-value">{leaveRequest.creator.substring(0, 20)}...</div>
             </div>
           </div>
         </div>
@@ -363,13 +403,6 @@ function ProcessLeaveRequest({ user }) {
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-          
-          <div style={{ marginBottom: '20px', padding: '16px', backgroundColor: 'rgba(52, 168, 83, 0.05)', borderRadius: '8px', border: '1px solid rgba(52, 168, 83, 0.2)' }}>
-            <h4 style={{ margin: '0 0 8px 0', color: '#34a853' }}>Command Preview:</h4>
-            <div style={{ fontSize: '14px', color: '#137333', fontFamily: 'monospace', backgroundColor: 'rgba(255,255,255,0.7)', padding: '8px', borderRadius: '4px' }}>
-              rollkit tx hr process-leave-request {requestId} "{action === 'approve' ? 'Approved' : 'Rejected'}" --from {user} --chain-id erprollup -y --fees 5stake
             </div>
           </div>
           

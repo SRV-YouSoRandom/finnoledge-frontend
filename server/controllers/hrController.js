@@ -1,170 +1,271 @@
-// server/controllers/hrController.js - FIXED based on exact ignite scaffolding
+// server/controllers/hrController.js - DEBUG VERSION with enhanced logging
 
 const { executeCommand } = require('../utils/cliExecutor');
 
 /**
- * Submit leave request using the rollkit CLI
- * Based on: ignite scaffold message SubmitLeaveRequest employeeId:uint startDate endDate reason --response requestId:uint --module hr -y
- * Command format: rollkit tx hr submit-leave-request employeeId startDate endDate reason
+ * Submit leave request - DEBUG VERSION
  */
 const submitLeaveRequest = async (req, res) => {
   try {
+    console.log('=== SUBMIT LEAVE REQUEST DEBUG ===');
+    console.log('Raw request body:', JSON.stringify(req.body, null, 2));
+    
     const { employeeId, startDate, endDate, reason, user = 'bob' } = req.body;
     
-    console.log('Received leave request data:', { employeeId, startDate, endDate, reason, user });
+    console.log('Extracted values:');
+    console.log('- employeeId:', employeeId, typeof employeeId);
+    console.log('- startDate:', startDate, typeof startDate);
+    console.log('- endDate:', endDate, typeof endDate);
+    console.log('- reason:', reason, typeof reason, 'length:', reason?.length);
+    console.log('- user:', user, typeof user);
     
     // Validate all required fields
     if (employeeId === undefined || employeeId === null) {
+      console.log('ERROR: Employee ID is missing');
       return res.status(400).json({
         success: false,
-        message: 'Employee system ID is required'
+        message: 'Employee system ID is required',
+        debug: { receivedEmployeeId: employeeId }
       });
     }
     
     if (!startDate || !endDate || !reason) {
+      console.log('ERROR: Missing required fields');
       return res.status(400).json({
         success: false,
-        message: 'Start date, end date, and reason are required'
+        message: 'Start date, end date, and reason are required',
+        debug: { startDate, endDate, reason }
       });
     }
     
-    // Convert employeeId to integer (should be system ID: 0, 1, 2...)
+    // Convert employeeId to integer
     const systemId = parseInt(employeeId);
+    console.log('Parsed systemId:', systemId, 'isNaN:', isNaN(systemId));
+    
     if (isNaN(systemId) || systemId < 0) {
+      console.log('ERROR: Invalid system ID');
       return res.status(400).json({
         success: false,
-        message: 'Employee ID must be a valid system ID number (0, 1, 2...)'
+        message: 'Employee ID must be a valid system ID number (0, 1, 2...)',
+        debug: { originalEmployeeId: employeeId, parsedSystemId: systemId }
       });
     }
     
-    // Validate date format (should be YYYY-MM-DD)
+    // Validate date format
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    console.log('Date validation:');
+    console.log('- startDate matches regex:', dateRegex.test(startDate));
+    console.log('- endDate matches regex:', dateRegex.test(endDate));
+    
     if (!dateRegex.test(startDate) || !dateRegex.test(endDate)) {
+      console.log('ERROR: Invalid date format');
       return res.status(400).json({
         success: false,
-        message: 'Dates must be in YYYY-MM-DD format'
+        message: 'Dates must be in YYYY-MM-DD format',
+        debug: { startDate, endDate }
       });
     }
     
     // Validate date logic
     const start = new Date(startDate);
     const end = new Date(endDate);
+    console.log('Date objects:');
+    console.log('- start:', start);
+    console.log('- end:', end);
+    console.log('- end < start:', end < start);
+    
     if (end < start) {
+      console.log('ERROR: End date before start date');
       return res.status(400).json({
         success: false,
-        message: 'End date cannot be before start date'
+        message: 'End date cannot be before start date',
+        debug: { startDate, endDate, start, end }
       });
     }
     
-    // Validate reason length
+    // Validate reason
     const trimmedReason = reason.trim();
+    console.log('Reason validation:');
+    console.log('- original reason:', JSON.stringify(reason));
+    console.log('- trimmed reason:', JSON.stringify(trimmedReason));
+    console.log('- trimmed length:', trimmedReason.length);
+    
     if (trimmedReason.length < 5) {
+      console.log('ERROR: Reason too short');
       return res.status(400).json({
         success: false,
-        message: 'Reason must be at least 5 characters long'
+        message: 'Reason must be at least 5 characters long',
+        debug: { originalReason: reason, trimmedReason, length: trimmedReason.length }
       });
     }
     
-    // FIXED: Based on exact ignite scaffolding format
-    // ignite scaffold message SubmitLeaveRequest employeeId:uint startDate endDate reason
-    // Command: rollkit tx hr submit-leave-request employeeId startDate endDate reason
+    // Build command
     const command = `rollkit tx hr submit-leave-request ${systemId} "${startDate}" "${endDate}" "${trimmedReason}" --from ${user} --chain-id erprollup -y --fees 5stake`;
     
-    console.log('Executing submit leave request command:', command);
+    console.log('=== COMMAND TO EXECUTE ===');
+    console.log(command);
+    console.log('=== COMMAND BREAKDOWN ===');
+    console.log('- systemId:', systemId);
+    console.log('- startDate:', `"${startDate}"`);
+    console.log('- endDate:', `"${endDate}"`);
+    console.log('- reason:', `"${trimmedReason}"`);
+    console.log('- user:', user);
     
     // Execute the command
+    console.log('Executing command...');
     const result = await executeCommand(command);
     
-    console.log('Command result:', result);
+    console.log('=== COMMAND RESULT ===');
+    console.log('stdout:', result.stdout);
+    console.log('stderr:', result.stderr);
     
     return res.status(200).json({
       success: true,
       message: 'Leave request submitted successfully',
-      data: result.stdout
+      data: result.stdout,
+      debug: {
+        command,
+        systemId,
+        startDate,
+        endDate,
+        trimmedReason,
+        user
+      }
     });
   } catch (error) {
-    console.error('Error submitting leave request:', error);
+    console.error('=== SUBMIT LEAVE REQUEST ERROR ===');
+    console.error('Error object:', error);
+    console.error('Error message:', error.message);
+    console.error('Error stderr:', error.stderr);
+    console.error('Error code:', error.code);
+    console.error('Stack trace:', error.stack);
+    
     return res.status(500).json({
       success: false,
       message: `Failed to submit leave request: ${error.message}`,
-      error: error.stderr || error.message
+      error: error.stderr || error.message,
+      debug: {
+        errorType: typeof error,
+        errorKeys: Object.keys(error),
+        fullError: error
+      }
     });
   }
 };
 
 /**
- * Process leave request using the rollkit CLI
- * Based on: ignite scaffold message ProcessLeaveRequest requestId:uint newStatus:string --module hr -y
- * Command format: rollkit tx hr process-leave-request requestId newStatus
+ * Process leave request - DEBUG VERSION
  */
 const processLeaveRequest = async (req, res) => {
   try {
+    console.log('=== PROCESS LEAVE REQUEST DEBUG ===');
+    console.log('Raw request body:', JSON.stringify(req.body, null, 2));
+    
     const { requestId, newStatus, user = 'bob' } = req.body;
     
-    console.log('Received process leave request data:', { requestId, newStatus, user });
+    console.log('Extracted values:');
+    console.log('- requestId:', requestId, typeof requestId);
+    console.log('- newStatus:', newStatus, typeof newStatus);
+    console.log('- user:', user, typeof user);
     
     if (requestId === undefined || requestId === null) {
+      console.log('ERROR: Request ID is missing');
       return res.status(400).json({
         success: false,
-        message: 'Request ID is required'
+        message: 'Request ID is required',
+        debug: { receivedRequestId: requestId }
       });
     }
     
     if (!newStatus) {
+      console.log('ERROR: New status is missing');
       return res.status(400).json({
         success: false,
-        message: 'New status is required'
+        message: 'New status is required',
+        debug: { receivedNewStatus: newStatus }
       });
     }
     
-    // Ensure requestId is a number
+    // Parse requestId
     const reqId = parseInt(requestId);
+    console.log('Parsed reqId:', reqId, 'isNaN:', isNaN(reqId));
+    
     if (isNaN(reqId) || reqId < 0) {
+      console.log('ERROR: Invalid request ID');
       return res.status(400).json({
         success: false,
-        message: 'Request ID must be a valid number (0, 1, 2...)'
+        message: 'Request ID must be a valid number (0, 1, 2...)',
+        debug: { originalRequestId: requestId, parsedReqId: reqId }
       });
     }
     
-    // Validate status - should match exactly what the blockchain expects
+    // Validate status
     const validStatuses = ['Approved', 'Rejected'];
+    console.log('Status validation:');
+    console.log('- newStatus:', JSON.stringify(newStatus));
+    console.log('- validStatuses:', validStatuses);
+    console.log('- includes:', validStatuses.includes(newStatus));
+    
     if (!validStatuses.includes(newStatus)) {
+      console.log('ERROR: Invalid status');
       return res.status(400).json({
         success: false,
-        message: `Invalid status. Must be one of: ${validStatuses.join(', ')}`
+        message: `Invalid status. Must be one of: ${validStatuses.join(', ')}`,
+        debug: { receivedStatus: newStatus, validStatuses }
       });
     }
     
-    // FIXED: Based on exact ignite scaffolding format
-    // ignite scaffold message ProcessLeaveRequest requestId:uint newStatus:string
-    // Command: rollkit tx hr process-leave-request requestId newStatus
+    // Build command
     const command = `rollkit tx hr process-leave-request ${reqId} "${newStatus}" --from ${user} --chain-id erprollup -y --fees 5stake`;
     
-    console.log('Executing process leave request command:', command);
+    console.log('=== COMMAND TO EXECUTE ===');
+    console.log(command);
+    console.log('=== COMMAND BREAKDOWN ===');
+    console.log('- reqId:', reqId);
+    console.log('- newStatus:', `"${newStatus}"`);
+    console.log('- user:', user);
     
     // Execute the command
+    console.log('Executing command...');
     const result = await executeCommand(command);
     
-    console.log('Command result:', result);
+    console.log('=== COMMAND RESULT ===');
+    console.log('stdout:', result.stdout);
+    console.log('stderr:', result.stderr);
     
     return res.status(200).json({
       success: true,
       message: `Leave request ${newStatus.toLowerCase()} successfully`,
-      data: result.stdout
+      data: result.stdout,
+      debug: {
+        command,
+        reqId,
+        newStatus,
+        user
+      }
     });
   } catch (error) {
-    console.error('Error processing leave request:', error);
+    console.error('=== PROCESS LEAVE REQUEST ERROR ===');
+    console.error('Error object:', error);
+    console.error('Error message:', error.message);
+    console.error('Error stderr:', error.stderr);
+    console.error('Error code:', error.code);
+    console.error('Stack trace:', error.stack);
+    
     return res.status(500).json({
       success: false,
       message: `Failed to process leave request: ${error.message}`,
-      error: error.stderr || error.message
+      error: error.stderr || error.message,
+      debug: {
+        errorType: typeof error,
+        errorKeys: Object.keys(error),
+        fullError: error
+      }
     });
   }
 };
 
-/**
- * Create a new offer letter using the rollkit CLI
- */
+// Include other functions unchanged...
 const createOfferLetter = async (req, res) => {
   try {
     const { candidateName, position, salary, joiningDate, user = 'bob' } = req.body;
@@ -176,12 +277,9 @@ const createOfferLetter = async (req, res) => {
       });
     }
     
-    // Construct the CLI command with "Pending" status as default
     const command = `rollkit tx hr create-offer-letter "${candidateName}" "${position}" ${salary} "${joiningDate}" "Pending" --from ${user} --chain-id erprollup -y --fees 5stake`;
     
     console.log('Executing command:', command);
-    
-    // Execute the command
     const result = await executeCommand(command);
     
     return res.status(200).json({
@@ -199,10 +297,6 @@ const createOfferLetter = async (req, res) => {
   }
 };
 
-/**
- * Accept an offer letter using the rollkit CLI
- * This creates the employee record and authentication credentials
- */
 const acceptOfferLetter = async (req, res) => {
   try {
     const { offerId, employeeId, contactInfo, user = 'bob' } = req.body;
@@ -214,12 +308,9 @@ const acceptOfferLetter = async (req, res) => {
       });
     }
     
-    // Construct the CLI command - this now creates address and password automatically
     const command = `rollkit tx hr accept-offer-letter ${offerId} "${employeeId}" "${contactInfo}" --from ${user} --chain-id erprollup -y --fees 5stake`;
     
     console.log('Executing command:', command);
-    
-    // Execute the command
     const result = await executeCommand(command);
     
     return res.status(200).json({
@@ -237,9 +328,6 @@ const acceptOfferLetter = async (req, res) => {
   }
 };
 
-/**
- * Define a new role using the rollkit CLI
- */
 const defineRole = async (req, res) => {
   try {
     const { name, description, permissions, user = 'bob' } = req.body;
@@ -251,7 +339,6 @@ const defineRole = async (req, res) => {
       });
     }
     
-    // Validate permissions against allowed values
     const validPermissions = ['ALL', 'SUBMIT_LEAVE', 'APPROVE_LEAVE', 'MANAGE_EMPLOYEES', 'VIEW_ONLY'];
     if (!validPermissions.includes(permissions)) {
       return res.status(400).json({
@@ -260,12 +347,9 @@ const defineRole = async (req, res) => {
       });
     }
     
-    // Construct the CLI command
     const command = `rollkit tx hr define-role "${name}" "${description}" "${permissions}" --from ${user} --chain-id erprollup -y --fees 5stake`;
     
     console.log('Executing command:', command);
-    
-    // Execute the command
     const result = await executeCommand(command);
     
     return res.status(200).json({
@@ -283,10 +367,6 @@ const defineRole = async (req, res) => {
   }
 };
 
-/**
- * Assign role to employee using the rollkit CLI
- * Uses system ID (0, 1, 2...) instead of employee ID (EMP001...)
- */
 const assignRoleToEmployee = async (req, res) => {
   try {
     const { employeeId, roleName, user = 'bob' } = req.body;
@@ -298,7 +378,6 @@ const assignRoleToEmployee = async (req, res) => {
       });
     }
     
-    // IMPORTANT: employeeId should be the system ID (0, 1, 2...), not the HR employee ID
     const systemId = parseInt(employeeId);
     if (isNaN(systemId) || systemId < 0) {
       return res.status(400).json({
@@ -307,12 +386,9 @@ const assignRoleToEmployee = async (req, res) => {
       });
     }
     
-    // Construct the CLI command using system ID
     const command = `rollkit tx hr assign-role-to-employee ${systemId} "${roleName}" --from ${user} --chain-id erprollup -y --fees 5stake`;
     
     console.log('Executing assign role command:', command);
-    
-    // Execute the command
     const result = await executeCommand(command);
     
     return res.status(200).json({
@@ -330,10 +406,6 @@ const assignRoleToEmployee = async (req, res) => {
   }
 };
 
-/**
- * Change employee password using the rollkit CLI
- * Uses system ID (0, 1, 2...) instead of employee ID (EMP001...)
- */
 const changePassword = async (req, res) => {
   try {
     const { employeeId, newPassword, user = 'bob' } = req.body;
@@ -345,7 +417,6 @@ const changePassword = async (req, res) => {
       });
     }
     
-    // IMPORTANT: employeeId should be the system ID (0, 1, 2...), not the HR employee ID
     const systemId = parseInt(employeeId);
     if (isNaN(systemId) || systemId < 0) {
       return res.status(400).json({
@@ -354,7 +425,6 @@ const changePassword = async (req, res) => {
       });
     }
     
-    // Validate password strength
     if (newPassword.length < 6) {
       return res.status(400).json({
         success: false,
@@ -362,12 +432,9 @@ const changePassword = async (req, res) => {
       });
     }
     
-    // Construct the CLI command using system ID
     const command = `rollkit tx hr change-password ${systemId} "${newPassword}" --from ${user} --chain-id erprollup -y --fees 5stake`;
     
     console.log('Executing change password command:', command);
-    
-    // Execute the command
     const result = await executeCommand(command);
     
     return res.status(200).json({

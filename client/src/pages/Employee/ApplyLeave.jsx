@@ -1,4 +1,4 @@
-// client/src/pages/Employee/ApplyLeave.jsx - FIXED for exact ignite scaffolding
+// client/src/pages/Employee/ApplyLeave.jsx - DEBUG VERSION
 
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
@@ -20,6 +20,7 @@ function ApplyLeave() {
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [debugInfo, setDebugInfo] = useState(null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -27,7 +28,6 @@ function ApplyLeave() {
       ...prev,
       [name]: value
     }));
-    // Clear error when user starts typing
     if (error) setError(null);
   };
 
@@ -35,117 +35,151 @@ const handleSubmit = async (e) => {
   e.preventDefault();
   setSubmitting(true);
   setError(null);
+  setDebugInfo(null);
 
-  // Validate dates
-  const startDate = new Date(formData.startDate);
-  const endDate = new Date(formData.endDate);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  if (startDate < today) {
-    setError('Start date cannot be in the past');
-    setSubmitting(false);
-    return;
-  }
-
-  if (endDate < startDate) {
-    setError('End date cannot be before start date');
-    setSubmitting(false);
-    return;
-  }
-
-  // Validate reason
-  if (!formData.reason.trim()) {
-    setError('Reason is required');
-    setSubmitting(false);
-    return;
-  }
-
-  if (formData.reason.trim().length < 5) {
-    setError('Reason must be at least 5 characters long');
-    setSubmitting(false);
-    return;
-  }
-
-  const loadingToastId = notifyTransactionSubmitted('Submitting leave request...');
+  console.log('=== APPLY LEAVE DEBUG START ===');
+  console.log('User object:', user);
+  console.log('Form data:', formData);
 
   try {
-    // CRITICAL: Get the system ID (0, 1, 2...) - this is the auto-generated blockchain ID
-    // NOT the HR Employee ID (EMP001, EMP123...)
+    // Validate dates
+    const startDate = new Date(formData.startDate);
+    const endDate = new Date(formData.endDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    console.log('Date validation:');
+    console.log('- startDate:', startDate);
+    console.log('- endDate:', endDate);
+    console.log('- today:', today);
+
+    if (startDate < today) {
+      setError('Start date cannot be in the past');
+      setSubmitting(false);
+      return;
+    }
+
+    if (endDate < startDate) {
+      setError('End date cannot be before start date');
+      setSubmitting(false);
+      return;
+    }
+
+    // Validate reason
+    if (!formData.reason.trim()) {
+      setError('Reason is required');
+      setSubmitting(false);
+      return;
+    }
+
+    if (formData.reason.trim().length < 5) {
+      setError('Reason must be at least 5 characters long');
+      setSubmitting(false);
+      return;
+    }
+
+    const loadingToastId = notifyTransactionSubmitted('Submitting leave request...');
+
+    // Get system ID
     const systemEmployeeId = user.systemId || user.employeeData?.id;
+    
+    console.log('Employee ID extraction:');
+    console.log('- user.systemId:', user.systemId);
+    console.log('- user.employeeData:', user.employeeData);
+    console.log('- user.employeeData?.id:', user.employeeData?.id);
+    console.log('- Final systemEmployeeId:', systemEmployeeId);
     
     if (systemEmployeeId === undefined || systemEmployeeId === null) {
       throw new Error('Employee system ID not found. Please log out and log back in.');
     }
     
-    console.log('Submitting leave request for employee:', {
-      systemId: systemEmployeeId,
-      employeeData: user.employeeData,
-      dates: { start: formData.startDate, end: formData.endDate },
-      reason: formData.reason
-    });
-    
-    // FIXED: Based on exact ignite scaffolding format
-    // ignite scaffold message SubmitLeaveRequest employeeId:uint startDate endDate reason
-    // Command: rollkit tx hr submit-leave-request employeeId startDate endDate reason
+    // Prepare request data
     const requestData = {
-      employeeId: parseInt(systemEmployeeId), // System ID (0, 1, 2...) - REQUIRED as uint
-      startDate: formData.startDate,          // Date in YYYY-MM-DD format - REQUIRED
-      endDate: formData.endDate,              // Date in YYYY-MM-DD format - REQUIRED  
-      reason: formData.reason.trim(),         // Reason string - REQUIRED
-      user: user.walletAddress || 'bob'       // Wallet address for --from parameter
+      employeeId: parseInt(systemEmployeeId),
+      startDate: formData.startDate,
+      endDate: formData.endDate,
+      reason: formData.reason.trim(),
+      user: user.walletAddress || 'bob'
     };
     
-    console.log('Sending request data to API:', requestData);
+    console.log('Request data prepared:');
+    console.log('- Original systemEmployeeId:', systemEmployeeId);
+    console.log('- Parsed employeeId:', requestData.employeeId);
+    console.log('- startDate:', requestData.startDate);
+    console.log('- endDate:', requestData.endDate);
+    console.log('- reason length:', requestData.reason.length);
+    console.log('- reason:', JSON.stringify(requestData.reason));
+    console.log('- user:', requestData.user);
+    console.log('- Full request data:', JSON.stringify(requestData, null, 2));
     
     // Validate all required fields before sending
-    if (requestData.employeeId === undefined || requestData.employeeId === null) {
-      throw new Error('Employee system ID is missing');
+    const validationErrors = [];
+    if (requestData.employeeId === undefined || requestData.employeeId === null || isNaN(requestData.employeeId)) {
+      validationErrors.push('Employee system ID is invalid');
+    }
+    if (!requestData.startDate) validationErrors.push('Start date is missing');
+    if (!requestData.endDate) validationErrors.push('End date is missing');
+    if (!requestData.reason) validationErrors.push('Reason is missing');
+    if (!requestData.user) validationErrors.push('User is missing');
+    
+    if (validationErrors.length > 0) {
+      throw new Error('Validation failed: ' + validationErrors.join(', '));
     }
     
-    if (!requestData.startDate || !requestData.endDate || !requestData.reason) {
-      throw new Error('All fields are required: startDate, endDate, reason');
-    }
-    
-    // Validate employeeId is a valid number
-    if (isNaN(requestData.employeeId) || requestData.employeeId < 0) {
-      throw new Error('Invalid employee system ID');
-    }
+    console.log('Sending request to API...');
     
     const response = await cli.submitLeaveRequest(requestData);
     
-    console.log('Leave request response:', response);
+    console.log('=== API RESPONSE ===');
+    console.log('Response status:', response.status);
+    console.log('Response data:', response.data);
     
-    const txHash = extractTxHashFromResponse(response.data.data || '');
-    notifyTransactionSuccess('Leave request submitted successfully!', txHash, loadingToastId);
-    
-    // Show success message
-    toast.success('Leave request submitted! You will be redirected to your requests.', {
-      duration: 3000
+    // Set debug info for display
+    setDebugInfo({
+      requestData,
+      response: response.data,
+      command: response.data.debug?.command
     });
     
-    // Wait a moment then redirect
-    setTimeout(() => {
-      navigate('/employee/leave-requests');
-    }, 1500);
+    if (response.data.success) {
+      const txHash = extractTxHashFromResponse(response.data.data || '');
+      notifyTransactionSuccess('Leave request submitted successfully!', txHash, loadingToastId);
+      
+      toast.success('Leave request submitted! You will be redirected to your requests.', {
+        duration: 3000
+      });
+      
+      setTimeout(() => {
+        navigate('/employee/leave-requests');
+      }, 1500);
+    } else {
+      throw new Error(response.data.message || 'Unknown error occurred');
+    }
     
   } catch (err) {
-    console.error('Error submitting leave request:', err);
+    console.error('=== APPLY LEAVE ERROR ===');
+    console.error('Error object:', err);
+    console.error('Error message:', err.message);
+    console.error('Error response:', err.response);
     
-    // Extract the actual error message
     let errorMessage = 'Failed to submit leave request. Please try again.';
+    let debugData = null;
     
-    if (err.response?.data?.message) {
-      errorMessage = err.response.data.message;
-    } else if (err.response?.data?.error) {
-      errorMessage = err.response.data.error;
+    if (err.response?.data) {
+      console.log('Server response data:', err.response.data);
+      errorMessage = err.response.data.message || errorMessage;
+      debugData = err.response.data.debug;
     } else if (err.message) {
       errorMessage = err.message;
     }
     
-    console.error('Processed error message:', errorMessage);
-    
     setError(errorMessage);
+    setDebugInfo({
+      error: errorMessage,
+      debugData,
+      fullError: err.response?.data || err
+    });
+    
     notifyTransactionError(errorMessage, loadingToastId);
   } finally {
     setSubmitting(false);
@@ -165,10 +199,8 @@ const handleSubmit = async (e) => {
     return 0;
   };
 
-  // Get today's date in YYYY-MM-DD format for min date
   const today = new Date().toISOString().split('T')[0];
 
-  // If user data is not available, show error
   if (!user || !user.employeeData) {
     return (
       <div className="apply-leave">
@@ -210,10 +242,17 @@ const handleSubmit = async (e) => {
             <div><strong>Department:</strong> {user?.employeeData?.department || 'Not Assigned'}</div>
             <div><strong>Position:</strong> {user?.employeeData?.position}</div>
           </div>
-          <div style={{ marginTop: '12px', fontSize: '12px', color: 'var(--secondary-color)', backgroundColor: 'rgba(251, 188, 4, 0.1)', padding: '8px', borderRadius: '4px', border: '1px solid rgba(251, 188, 4, 0.3)' }}>
-            <strong>⚠️ Important:</strong> Leave requests use your <strong>System ID ({user?.systemId || user?.employeeData?.id})</strong> - the auto-generated blockchain ID, NOT your HR Employee ID ({user?.employeeData?.employeeId}).
-          </div>
         </div>
+
+        {/* Debug Information Display */}
+        {debugInfo && (
+          <div style={{ marginBottom: '24px', padding: '16px', backgroundColor: '#f8f9fa', borderRadius: '8px', border: '1px solid #dadce0' }}>
+            <h4 style={{ margin: '0 0 12px 0', color: '#495057' }}>Debug Information</h4>
+            <pre style={{ fontSize: '12px', maxHeight: '300px', overflow: 'auto', backgroundColor: '#fff', padding: '12px', borderRadius: '4px' }}>
+              {JSON.stringify(debugInfo, null, 2)}
+            </pre>
+          </div>
+        )}
 
         {error && (
           <div className="error-message" style={{ marginBottom: '20px' }}>
@@ -288,12 +327,16 @@ const handleSubmit = async (e) => {
           </div>
           
           <div style={{ marginBottom: '20px', padding: '16px', backgroundColor: 'rgba(52, 168, 83, 0.05)', borderRadius: '8px', border: '1px solid rgba(52, 168, 83, 0.2)' }}>
-            <h4 style={{ margin: '0 0 8px 0', color: '#34a853' }}>Request Summary:</h4>
+            <h4 style={{ margin: '0 0 8px 0', color: '#34a853' }}>Request Preview</h4>
             <div style={{ fontSize: '14px', color: '#137333' }}>
               <div><strong>Employee System ID:</strong> {user?.systemId || user?.employeeData?.id}</div>
               <div><strong>Leave Period:</strong> {formData.startDate || 'Not selected'} to {formData.endDate || 'Not selected'}</div>
               <div><strong>Duration:</strong> {calculateDuration()} day{calculateDuration() > 1 ? 's' : ''}</div>
               <div><strong>Reason:</strong> {formData.reason || 'Not provided'}</div>
+              <div><strong>Command Preview:</strong></div>
+              <code style={{ fontSize: '12px', backgroundColor: 'rgba(255,255,255,0.7)', padding: '4px', borderRadius: '4px', display: 'block', marginTop: '4px' }}>
+                rollkit tx hr submit-leave-request {user?.systemId || user?.employeeData?.id} "{formData.startDate}" "{formData.endDate}" "{formData.reason.trim()}"
+              </code>
             </div>
           </div>
           
