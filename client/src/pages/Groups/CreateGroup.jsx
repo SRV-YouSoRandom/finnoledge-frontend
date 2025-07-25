@@ -26,17 +26,24 @@ function CreateGroup({ user }) {
     setLoading(true);
     setError(null);
 
+    const toastId = notifyTransactionSubmitted('Creating account group...');
+
     try {
-      await cli.createGroup({
+      const response = await cli.createGroup({
         ...formData,
         user // Pass the user (wallet name) for CLI command execution
       });
+      
+      const txHash = extractTxHashFromResponse(response.data.data || '');
+      notifyTransactionSuccess('Account group created successfully!', txHash);
       
       // Success - redirect to groups list
       navigate('/groups');
     } catch (err) {
       console.error('Error creating group:', err);
-      setError(err.response?.data?.message || 'Failed to create group. Please try again.');
+      const errorMessage = err.response?.data?.message || 'Failed to create group. Please try again.';
+      setError(errorMessage);
+      notifyTransactionError(errorMessage);
     } finally {
       setLoading(false);
     }

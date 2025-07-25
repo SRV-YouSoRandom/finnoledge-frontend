@@ -1,6 +1,11 @@
 import { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Sidebar from './components/Sidebar';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import Login from './components/Login';
+import ProtectedRoute from './components/ProtectedRoute';
+import AdminSidebar from './components/AdminSidebar';
+import EmployeeSidebar from './components/EmployeeSidebar';
 import Dashboard from './pages/Dashboard';
 
 // Groups
@@ -34,7 +39,7 @@ import StockMovementDetails from './pages/Inventory/StockMovementDetails';
 import BalanceSheet from './pages/Reports/BalanceSheet';
 import ProfitAndLoss from './pages/Reports/ProfitAndLoss';
 
-// HR
+// HR (Admin)
 import HRDashboard from './pages/HR/HRDashboard';
 import OfferLetterList from './pages/HR/OfferLetters/OfferLetterList';
 import OfferLetterDetails from './pages/HR/OfferLetters/OfferLetterDetails';
@@ -51,70 +56,120 @@ import LeaveRequestDetails from './pages/HR/LeaveRequests/LeaveRequestDetails';
 import CreateLeaveRequest from './pages/HR/LeaveRequests/CreateLeaveRequest';
 import ProcessLeaveRequest from './pages/HR/LeaveRequests/ProcessLeaveRequest';
 
+// Employee Pages
+import EmployeeDashboard from './pages/Employee/EmployeeDashboard';
+import EmployeeLeaveRequests from './pages/Employee/EmployeeLeaveRequests';
+import ApplyLeave from './pages/Employee/ApplyLeave';
+import EmployeeProfile from './pages/Employee/EmployeeProfile';
+import ChangePassword from './pages/Employee/ChangePassword';
+import GenerateCredentials from './pages/HR/Employees/GenerateCredentials';
+
 import './App.css';
 
-function App() {
-  const [walletAddress, setWalletAddress] = useState('bob'); // Default user for simplicity
+function AppContent() {
+  const { user, isAuthenticated, isAdmin, isEmployee } = useAuth();
+
+  if (!isAuthenticated) {
+    return <Login />;
+  }
 
   return (
-    <Router>
-      <div className="app">
-        <Sidebar />
-        <main className="content">
-          <Routes>
-            <Route path="/" element={<Dashboard user={walletAddress} />} />
-            
-            {/* Group Routes */}
-            <Route path="/groups" element={<GroupList />} />
-            <Route path="/groups/:id" element={<GroupDetails />} />
-            <Route path="/create-group" element={<CreateGroup user={walletAddress} />} />
-            
-            {/* Ledger Routes */}
-            <Route path="/ledgers" element={<LedgerList />} />
-            <Route path="/ledgers/:id" element={<LedgerDetails />} />
-            <Route path="/create-ledger" element={<CreateLedger user={walletAddress} />} />
-            
-            {/* Journal Entry Routes */}
-            <Route path="/journal-entries" element={<JournalEntryList />} />
-            <Route path="/journal-entries/:id" element={<JournalEntryDetails />} />
-            <Route path="/create-journal-entry" element={<CreateJournalEntry user={walletAddress} />} />
-            
-            {/* Transaction Routes */}
-            <Route path="/send-and-record" element={<SendAndRecord user={walletAddress} />} />
+    <div className="app">
+      {isAdmin && <AdminSidebar />}
+      {isEmployee && <EmployeeSidebar />}
+      
+      <main className="content">
+        <Routes>
+          {/* Admin Routes */}
+          {isAdmin && (
+            <>
+              <Route path="/" element={<Dashboard user={user.walletAddress} />} />
+              
+              {/* Group Routes */}
+              <Route path="/groups" element={<GroupList />} />
+              <Route path="/groups/:id" element={<GroupDetails />} />
+              <Route path="/create-group" element={<CreateGroup user={user.walletAddress} />} />
+              
+              {/* Ledger Routes */}
+              <Route path="/ledgers" element={<LedgerList />} />
+              <Route path="/ledgers/:id" element={<LedgerDetails />} />
+              <Route path="/create-ledger" element={<CreateLedger user={user.walletAddress} />} />
+              
+              {/* Journal Entry Routes */}
+              <Route path="/journal-entries" element={<JournalEntryList />} />
+              <Route path="/journal-entries/:id" element={<JournalEntryDetails />} />
+              <Route path="/create-journal-entry" element={<CreateJournalEntry user={user.walletAddress} />} />
+              
+              {/* Transaction Routes */}
+              <Route path="/send-and-record" element={<SendAndRecord user={user.walletAddress} />} />
 
-            {/* Inventory Routes */}
-            <Route path="/stock-overview" element={<StockOverview />} />
-            <Route path="/products" element={<ProductList />} />
-            <Route path="/products/:id" element={<ProductDetails />} />
-            <Route path="/create-product" element={<CreateProduct user={walletAddress} />} />
-            <Route path="/stock-movements" element={<StockMovementList />} />
-            <Route path="/record-stock-movement" element={<RecordStockMovement user={walletAddress} />} />
-            <Route path="/stock-movements/:id" element={<StockMovementDetails />} />
+              {/* Inventory Routes */}
+              <Route path="/stock-overview" element={<StockOverview />} />
+              <Route path="/products" element={<ProductList />} />
+              <Route path="/products/:id" element={<ProductDetails />} />
+              <Route path="/create-product" element={<CreateProduct user={user.walletAddress} />} />
+              <Route path="/stock-movements" element={<StockMovementList />} />
+              <Route path="/record-stock-movement" element={<RecordStockMovement user={user.walletAddress} />} />
+              <Route path="/stock-movements/:id" element={<StockMovementDetails />} />
 
-            {/* HR Routes */}
-            <Route path="/hr" element={<HRDashboard user={walletAddress} />} />
-            <Route path="/hr/offer-letters" element={<OfferLetterList />} />
-            <Route path="/hr/offer-letters/:id" element={<OfferLetterDetails />} />
-            <Route path="/hr/create-offer-letter" element={<CreateOfferLetter user={walletAddress} />} />
-            <Route path="/hr/employees" element={<EmployeeList />} />
-            <Route path="/hr/employees/:id" element={<EmployeeDetails />} />
-            <Route path="/hr/assign-role/:employeeId" element={<AssignRole user={walletAddress} />} />
-            <Route path="/hr/accept-offer/:offerId" element={<AcceptOffer user={walletAddress} />} />
-            <Route path="/hr/roles" element={<RoleList />} />
-            <Route path="/hr/roles/:id" element={<RoleDetails />} />
-            <Route path="/hr/create-role" element={<CreateRole user={walletAddress} />} />
-            <Route path="/hr/leave-requests" element={<LeaveRequestList />} />
-            <Route path="/hr/leave-requests/:id" element={<LeaveRequestDetails />} />
-            <Route path="/hr/create-leave-request" element={<CreateLeaveRequest user={walletAddress} />} />
-            <Route path="/hr/process-leave-request/:requestId" element={<ProcessLeaveRequest user={walletAddress} />} />
+              {/* HR Routes */}
+              <Route path="/hr" element={<HRDashboard user={user.walletAddress} />} />
+              <Route path="/hr/offer-letters" element={<OfferLetterList />} />
+              <Route path="/hr/offer-letters/:id" element={<OfferLetterDetails />} />
+              <Route path="/hr/create-offer-letter" element={<CreateOfferLetter user={user.walletAddress} />} />
+              <Route path="/hr/employees" element={<EmployeeList />} />
+              <Route path="/hr/employees/:id" element={<EmployeeDetails />} />
+              <Route path="/hr/generate-credentials/:employeeId" element={<GenerateCredentials />} />
+              <Route path="/hr/assign-role/:employeeId" element={<AssignRole user={user.walletAddress} />} />
+              <Route path="/hr/accept-offer/:offerId" element={<AcceptOffer user={user.walletAddress} />} />
+              <Route path="/hr/roles" element={<RoleList />} />
+              <Route path="/hr/roles/:id" element={<RoleDetails />} />
+              <Route path="/hr/create-role" element={<CreateRole user={user.walletAddress} />} />
+              <Route path="/hr/leave-requests" element={<LeaveRequestList />} />
+              <Route path="/hr/leave-requests/:id" element={<LeaveRequestDetails />} />
+              <Route path="/hr/create-leave-request" element={<CreateLeaveRequest user={user.walletAddress} />} />
+              <Route path="/hr/process-leave-request/:requestId" element={<ProcessLeaveRequest user={user.walletAddress} />} />
 
-            {/* Reports */}
-            <Route path="/balance-sheet" element={<BalanceSheet />} />
-            <Route path="/profit-and-loss" element={<ProfitAndLoss />} />
-          </Routes>
-        </main>
-      </div>
-    </Router>
+              {/* Reports */}
+              <Route path="/balance-sheet" element={<BalanceSheet />} />
+              <Route path="/profit-and-loss" element={<ProfitAndLoss />} />
+            </>
+          )}
+
+          {/* Employee Routes */}
+          {isEmployee && (
+            <>
+              <Route path="/employee/dashboard" element={<EmployeeDashboard />} />
+              <Route path="/employee/leave-requests" element={<EmployeeLeaveRequests />} />
+              <Route path="/employee/apply-leave" element={<ApplyLeave />} />
+              <Route path="/employee/profile" element={<EmployeeProfile />} />
+              <Route path="/employee/change-password" element={<ChangePassword />} />
+              
+              {/* Redirect employee root to their dashboard */}
+              <Route path="/" element={<Navigate to="/employee/dashboard" replace />} />
+            </>
+          )}
+
+          {/* Fallback redirects */}
+          <Route path="*" element={
+            <Navigate to={isEmployee ? "/employee/dashboard" : "/"} replace />
+          } />
+        </Routes>
+      </main>
+      
+      {/* Toast notifications */}
+      <Toaster />
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <Router>
+        <AppContent />
+      </Router>
+    </AuthProvider>
   );
 }
 

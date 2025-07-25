@@ -49,6 +49,10 @@ const api = {
   // HR - Leave Requests
   fetchLeaveRequests: () => axios.get(`${API_URL}/erprollup/hr/leave_request`),
   fetchLeaveRequest: (id) => axios.get(`${API_URL}/erprollup/hr/leave_request/${id}`),
+  
+  // HR - User Authentication
+  fetchUserAuths: () => axios.get(`${API_URL}/erprollup/hr/user_auth`),
+  fetchUserAuth: (id) => axios.get(`${API_URL}/erprollup/hr/user_auth/${id}`),
 };
 
 // CLI command endpoints for POST requests

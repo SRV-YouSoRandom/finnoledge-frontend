@@ -40,6 +40,7 @@ apiRouter.post('/hr/roles', hrController.defineRole);
 apiRouter.post('/hr/assign-role', hrController.assignRoleToEmployee);
 apiRouter.post('/hr/leave-requests', hrController.submitLeaveRequest);
 apiRouter.post('/hr/process-leave-request', hrController.processLeaveRequest);
+apiRouter.post('/hr/change-password', hrController.changePassword);
 
 // Use API router
 app.use('/api', apiRouter);

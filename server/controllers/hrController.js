@@ -219,11 +219,48 @@ const processLeaveRequest = async (req, res) => {
   }
 };
 
+
+/**
+ * Change employee password using the rollkit CLI
+ */
+const changePassword = async (req, res) => {
+  try {
+    const { employeeId, newPassword, user = 'bob' } = req.body;
+    
+    if (!employeeId || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Employee ID and new password are required'
+      });
+    }
+    
+    // Construct the CLI command
+    const command = `rollkit tx hr change-password ${employeeId} "${newPassword}" --from ${user} --chain-id erprollup -y --fees 5stake`;
+    
+    // Execute the command
+    const result = await executeCommand(command);
+    
+    return res.status(200).json({
+      success: true,
+      message: 'Password changed successfully',
+      data: result.stdout
+    });
+  } catch (error) {
+    console.error('Error changing password:', error);
+    return res.status(500).json({
+      success: false,
+      message: `Failed to change password: ${error.message}`,
+      error: error.stderr || error.message
+    });
+  }
+};
+
 module.exports = {
   createOfferLetter,
   acceptOfferLetter,
   defineRole,
   assignRoleToEmployee,
   submitLeaveRequest,
-  processLeaveRequest
+  processLeaveRequest,
+  changePassword
 };
