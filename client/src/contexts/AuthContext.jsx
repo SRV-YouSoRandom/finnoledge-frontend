@@ -54,26 +54,12 @@ export const AuthProvider = ({ children }) => {
             const employeesResponse = await api.fetchEmployees();
             const employees = employeesResponse.data.Employee || [];
             
-            // Try to find employee by matching address pattern
+            // For demo, find employee by matching part of the address
+            // In real implementation, you'd use the UserAuth lookup
             employeeData = employees.find(emp => 
-              walletAddress.includes(emp.employeeId)
-            );
-            
-            // If no exact match, create demo employee data for testing
-            if (!employeeData && walletAddress === 'emp_test_employee') {
-              employeeData = {
-                id: 999,
-                name: 'Test Employee',
-                employeeId: 'TEST001',
-                department: 'Testing Department',
-                position: 'Test Position',
-                role: 'Employee',
-                contactInfo: 'test@example.com'
-              };
-            } else if (!employeeData && employees.length > 0) {
-              // Use first available employee for demo
-              employeeData = employees[0];
-            }
+              walletAddress.includes(emp.employeeId) || 
+              employees.length > 0 // For demo, use first employee if available
+            ) || employees[0]; // Use first employee for demo
             
             if (employeeData) {
               userRole = 'employee';
