@@ -40,8 +40,13 @@ function EmployeeDashboard() {
       }
     };
     
-    fetchEmployeeData();
-  }, [user?.employeeData?.id, updateEmployeeData]);
+    // Only fetch if we have user data
+    if (user?.employeeData?.id) {
+      fetchEmployeeData();
+    } else {
+      setLoading(false);
+    }
+  }, [user?.employeeData?.id]); // Fixed: Removed updateEmployeeData from dependencies
 
   const getStatusBadge = (status) => {
     const statusClasses = {
@@ -85,6 +90,15 @@ function EmployeeDashboard() {
     return <div className="loading">Loading dashboard...</div>;
   }
 
+  // Show message if no user data
+  if (!user?.employeeData) {
+    return (
+      <div className="error-state">
+        Unable to load employee data. Please try logging in again.
+      </div>
+    );
+  }
+
   return (
     <div className="employee-dashboard">
       <div className="page-header">
@@ -97,13 +111,13 @@ function EmployeeDashboard() {
           <IconUser size={48} style={{ color: 'var(--primary-color)' }} />
           <div>
             <h2 style={{ margin: '0 0 8px 0', fontSize: '24px' }}>
-              Welcome, {user?.employeeData?.name}!
+              Welcome, {user.employeeData.name}!
             </h2>
             <div style={{ color: 'var(--secondary-color)' }}>
-              <div>Employee ID: <strong>{user?.employeeData?.employeeId}</strong></div>
-              <div>Position: <strong>{user?.employeeData?.position}</strong></div>
-              <div>Department: <strong>{user?.employeeData?.department || 'Not Assigned'}</strong></div>
-              <div>Role: <strong>{user?.employeeData?.role}</strong></div>
+              <div>Employee ID: <strong>{user.employeeData.employeeId}</strong></div>
+              <div>Position: <strong>{user.employeeData.position}</strong></div>
+              <div>Department: <strong>{user.employeeData.department || 'Not Assigned'}</strong></div>
+              <div>Role: <strong>{user.employeeData.role}</strong></div>
             </div>
           </div>
         </div>
