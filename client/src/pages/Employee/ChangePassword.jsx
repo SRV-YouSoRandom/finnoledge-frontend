@@ -60,8 +60,13 @@ function ChangePassword() {
     const toastId = notifyTransactionSubmitted('Changing password...');
 
     try {
+      // FIXED: Use systemId (0, 1, 2...) instead of employeeData.id
+      const systemEmployeeId = user.systemId || user.employeeData.id;
+      
+      console.log('Changing password for system ID:', systemEmployeeId); // Debug log
+      
       const response = await cli.changePassword({
-        employeeId: parseInt(user.employeeData.id),
+        employeeId: parseInt(systemEmployeeId), // Use system ID, not HR employee ID
         newPassword: formData.newPassword,
         user: user.walletAddress
       });
@@ -98,8 +103,12 @@ function ChangePassword() {
           </h3>
           <div style={{ fontSize: '14px' }}>
             <div><strong>Employee:</strong> {user?.employeeData?.name}</div>
-            <div><strong>Employee ID:</strong> {user?.employeeData?.employeeId}</div>
+            <div><strong>HR Employee ID:</strong> {user?.employeeData?.employeeId}</div>
+            <div><strong>System ID:</strong> <code style={{ backgroundColor: 'rgba(26, 115, 232, 0.1)', padding: '2px 4px', borderRadius: '3px' }}>{user?.systemId || user?.employeeData?.id}</code></div>
             <div><strong>Login Address:</strong> <code>{user?.walletAddress}</code></div>
+          </div>
+          <div style={{ marginTop: '8px', fontSize: '12px', color: 'var(--secondary-color)' }}>
+            <strong>Note:</strong> Password changes are processed using your System ID ({user?.systemId || user?.employeeData?.id})
           </div>
         </div>
 

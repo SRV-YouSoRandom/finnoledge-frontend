@@ -52,8 +52,14 @@ const handleSubmit = async (e) => {
   const loadingToastId = notifyTransactionSubmitted('Submitting leave request...');
 
   try {
+    // FIXED: Use systemId (0, 1, 2...) instead of employeeData.id
+    // The systemId is the blockchain-generated ID that CLI commands expect
+    const systemEmployeeId = user.systemId || user.employeeData.id;
+    
+    console.log('Submitting leave request for system ID:', systemEmployeeId); // Debug log
+    
     const response = await cli.submitLeaveRequest({
-      employeeId: parseInt(user.employeeData.id),
+      employeeId: parseInt(systemEmployeeId), // Use system ID, not HR employee ID
       startDate: formData.startDate,
       endDate: formData.endDate,
       reason: formData.reason,
@@ -109,8 +115,12 @@ const handleSubmit = async (e) => {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', fontSize: '14px' }}>
             <div><strong>Name:</strong> {user?.employeeData?.name}</div>
             <div><strong>Employee ID:</strong> {user?.employeeData?.employeeId}</div>
+            <div><strong>System ID:</strong> <code style={{ backgroundColor: 'rgba(26, 115, 232, 0.1)', padding: '2px 4px', borderRadius: '3px' }}>{user?.systemId || user?.employeeData?.id}</code></div>
             <div><strong>Department:</strong> {user?.employeeData?.department || 'Not Assigned'}</div>
             <div><strong>Position:</strong> {user?.employeeData?.position}</div>
+          </div>
+          <div style={{ marginTop: '8px', fontSize: '12px', color: 'var(--secondary-color)' }}>
+            <strong>Note:</strong> Leave requests are processed using your System ID ({user?.systemId || user?.employeeData?.id})
           </div>
         </div>
 

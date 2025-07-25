@@ -1,13 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { api, cli } from '../../../services/api';
+import { useTransactionNotification } from '../../../hooks/useTransactionNotification';
 import { IconArrowLeft, IconCheck, IconX } from '@tabler/icons-react';
 
 function ProcessLeaveRequest({ user }) {
   const { requestId } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { notifyTransactionSubmitted, notifyTransactionSuccess, notifyTransactionError, extractTxHashFromResponse } = useTransactionNotification();
+  
   const [leaveRequest, setLeaveRequest] = useState(null);
+  const [employee, setEmployee] = useState(null);
   const [action, setAction] = useState(searchParams.get('action') || 'approve');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -18,7 +22,31 @@ function ProcessLeaveRequest({ user }) {
       try {
         setLoading(true);
         const response = await api.fetchLeaveRequest(requestId);
-        setLeaveRequest(response.data.LeaveRequest);
+        const leaveData = response.data.LeaveRequest;
+        setLeaveRequest(leaveData);
+        
+        // Fetch employee details using the employeeId from leave request
+        // IMPORTANT: The employeeId in leave request is the system ID (0, 1, 2...)
+        try {
+          const employeesResponse = await api.fetchEmployees();
+          const employees = employeesResponse.data.Employee || [];
+          
+          // Find employee by system ID (leaveData.employeeId matches employee.id)
+          const requestEmployee = employees.find(emp => 
+            emp.id.toString() === leaveData.employeeId.toString()
+          );
+          
+          if (requestEmployee) {
+            setEmployee(requestEmployee);
+            console.log('Found employee for leave request:', requestEmployee);
+          } else {
+            console.log('No employee found for system ID:', leaveData.employeeId);
+          }
+        } catch (employeeError) {
+          console.log('Error fetching employee details:', employeeError);
+          setEmployee(null);
+        }
+        
       } catch (error) {
         console.error('Error fetching leave request details:', error);
         setError('Failed to load leave request details.');
@@ -36,19 +64,25 @@ function ProcessLeaveRequest({ user }) {
     setError(null);
 
     const newStatus = action === 'approve' ? 'Approved' : 'Rejected';
+    const loadingToastId = notifyTransactionSubmitted(`${action === 'approve' ? 'Approving' : 'Rejecting'} leave request...`);
 
     try {
-      await cli.processLeaveRequest({
+      const response = await cli.processLeaveRequest({
         requestId: parseInt(requestId),
         newStatus,
         user
       });
       
+      const txHash = extractTxHashFromResponse(response.data.data || '');
+      notifyTransactionSuccess(`Leave request ${newStatus.toLowerCase()} successfully!`, txHash, loadingToastId);
+      
       // Success - redirect to leave requests list
       navigate('/hr/leave-requests');
     } catch (err) {
       console.error('Error processing leave request:', err);
-      setError(err.response?.data?.message || 'Failed to process leave request. Please try again.');
+      const errorMessage = err.response?.data?.message || 'Failed to process leave request. Please try again.';
+      setError(errorMessage);
+      notifyTransactionError(errorMessage, loadingToastId);
     } finally {
       setSubmitting(false);
     }
@@ -102,18 +136,51 @@ function ProcessLeaveRequest({ user }) {
               <div className="detail-value">{leaveRequest.id}</div>
             </div>
             <div className="detail-item">
-              <div className="detail-label">Employee ID</div>
+              <div className="detail-label">Employee System ID</div>
               <div className="detail-value">
                 <code style={{ 
-                  backgroundColor: 'rgba(0,0,0,0.05)', 
-                  padding: '2px 6px', 
+                  backgroundColor: 'rgba(26, 115, 232, 0.1)', 
+                  padding: '4px 8px', 
                   borderRadius: '4px',
-                  fontSize: '12px'
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  color: 'var(--primary-color)'
                 }}>
                   {leaveRequest.employeeId}
                 </code>
               </div>
             </div>
+            {employee && (
+              <>
+                <div className="detail-item">
+                  <div className="detail-label">Employee Name</div>
+                  <div className="detail-value" style={{ fontWeight: '600' }}>
+                    {employee.name}
+                  </div>
+                </div>
+                <div className="detail-item">
+                  <div className="detail-label">HR Employee ID</div>
+                  <div className="detail-value">
+                    <code style={{ 
+                      backgroundColor: 'rgba(0,0,0,0.05)', 
+                      padding: '2px 6px', 
+                      borderRadius: '4px',
+                      fontSize: '12px'
+                    }}>
+                      {employee.employeeId}
+                    </code>
+                  </div>
+                </div>
+                <div className="detail-item">
+                  <div className="detail-label">Department</div>
+                  <div className="detail-value">{employee.department || 'Not Assigned'}</div>
+                </div>
+                <div className="detail-item">
+                  <div className="detail-label">Position</div>
+                  <div className="detail-value">{employee.position}</div>
+                </div>
+              </>
+            )}
             <div className="detail-item">
               <div className="detail-label">Leave Period</div>
               <div className="detail-value">
@@ -135,6 +202,10 @@ function ProcessLeaveRequest({ user }) {
               <div className="detail-value">
                 <span className="badge badge-warning">Pending</span>
               </div>
+            </div>
+            <div className="detail-item">
+              <div className="detail-label">Submitted By</div>
+              <div className="detail-value">{leaveRequest.creator.substring(0, 20)}...</div>
             </div>
           </div>
         </div>

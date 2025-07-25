@@ -67,7 +67,7 @@ export const AuthProvider = ({ children }) => {
       if (isNaN(employeeSystemId)) {
         return { 
           success: false, 
-          error: 'Invalid login credentials. Please use your employee ID (0, 1, 2...) and password.' 
+          error: 'Invalid login credentials. Please use your system ID (0, 1, 2...) and password.' 
         };
       }
 
@@ -76,21 +76,27 @@ export const AuthProvider = ({ children }) => {
         const employeesResponse = await api.fetchEmployees();
         const employees = employeesResponse.data.Employee || [];
 
-        // Find employee by system ID (the auto-incremented ID from blockchain)
+        // FIXED: Find employee by system ID (the auto-incremented ID from blockchain)
+        // The 'id' field in the API response is the system-generated ID (0, 1, 2...)
+        // The 'employeeId' field is the HR-assigned ID (EMP001, EMP123...)
         const employee = employees.find(emp => emp.id.toString() === employeeSystemId.toString());
         
         if (!employee) {
           return { 
             success: false, 
-            error: `No employee found with ID ${employeeSystemId}. Please contact HR.` 
+            error: `No employee found with system ID ${employeeSystemId}. Please contact HR.` 
           };
         }
+
+        console.log('Found employee:', employee); // Debug log
 
         // Try to fetch user auth records, but don't fail if they don't exist
         let userAuth = null;
         try {
           const userAuthsResponse = await api.fetchUserAuths();
           const userAuths = userAuthsResponse.data.UserAuth || [];
+          
+          // FIXED: Match by system ID (employee.id), not HR employee ID
           userAuth = userAuths.find(auth => 
             auth.employeeId.toString() === employee.id.toString()
           );
@@ -121,7 +127,7 @@ export const AuthProvider = ({ children }) => {
             privateKey: password,
             role: 'employee',
             employeeData: employee,
-            systemId: employee.id,
+            systemId: employee.id, // This is the critical field - the system-generated ID (0, 1, 2...)
             loginTime: new Date().toISOString()
           };
 
@@ -131,13 +137,21 @@ export const AuthProvider = ({ children }) => {
           return { success: true, user: userData };
         } else {
           // Fallback: simple password check (for demo purposes)
-          if (password === 'temp123' || password === employee.employeeId) {
+          // Check against common demo passwords
+          const validDemoPasswords = [
+            'temp123', 
+            'newPassword123', 
+            employee.employeeId,
+            'demo123'
+          ];
+          
+          if (validDemoPasswords.includes(password)) {
             const userData = {
               walletAddress: `emp_${employee.employeeId}_${employee.id}`,
               privateKey: password,
               role: 'employee',
               employeeData: employee,
-              systemId: employee.id,
+              systemId: employee.id, // This is the critical field - the system-generated ID (0, 1, 2...)
               loginTime: new Date().toISOString()
             };
 
@@ -179,7 +193,9 @@ export const AuthProvider = ({ children }) => {
       try {
         const employeesResponse = await api.fetchEmployees();
         const employees = employeesResponse.data.Employee || [];
-        const updatedEmployeeData = employees.find(emp => emp.id === user.employeeData.id);
+        
+        // FIXED: Update using system ID (user.systemId), not HR employee ID
+        const updatedEmployeeData = employees.find(emp => emp.id === user.systemId);
         
         if (updatedEmployeeData) {
           const updatedUser = {
