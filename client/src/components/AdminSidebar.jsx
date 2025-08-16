@@ -1,3 +1,4 @@
+// client/src/components/AdminSidebar.jsx - Updated with Validator section
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { 
@@ -17,7 +18,10 @@ import {
   IconBriefcase,
   IconCalendarTime,
   IconLogout,
-  IconUser
+  IconUser,
+  IconShield,
+  IconSettings,
+  IconTrendingDown
 } from '@tabler/icons-react';
 import './Sidebar.css';
 
@@ -106,6 +110,33 @@ function AdminSidebar() {
             </NavLink>
           </li>
           
+          {/* NEW VALIDATOR SECTION */}
+          <li className="sidebar-section">Validator Tracking</li>
+          <li>
+            <NavLink to="/validator" className={({ isActive }) => isActive ? 'active' : ''}>
+              <IconShield size={20} />
+              <span>Validator Overview</span>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink to="/validator/list" className={({ isActive }) => isActive ? 'active' : ''}>
+              <IconList size={20} />
+              <span>All Validators</span>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink to="/validator/record-earnings" className={({ isActive }) => isActive ? 'active' : ''}>
+              <IconTrendingUp size={20} />
+              <span>Record Earnings</span>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink to="/validator/record-expenditure" className={({ isActive }) => isActive ? 'active' : ''}>
+              <IconTrendingDown size={20} />
+              <span>Record Expenditure</span>
+            </NavLink>
+          </li>
+          
           <li className="sidebar-section">Human Resources</li>
           <li>
             <NavLink to="/hr" className={({ isActive }) => isActive ? 'active' : ''}>
@@ -169,6 +200,12 @@ function AdminSidebar() {
             <NavLink to="/create-journal-entry" className={({ isActive }) => isActive ? 'active' : ''}>
               <IconPlus size={20} />
               <span>New Journal Entry</span>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink to="/validator/setup" className={({ isActive }) => isActive ? 'active' : ''}>
+              <IconPlus size={20} />
+              <span>Setup Validator</span>
             </NavLink>
           </li>
           <li>

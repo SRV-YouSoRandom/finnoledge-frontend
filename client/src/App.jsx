@@ -1,3 +1,4 @@
+// client/src/App.jsx - Updated with Validator routes
 import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
@@ -64,6 +65,14 @@ import ApplyLeave from './pages/Employee/ApplyLeave';
 import EmployeeProfile from './pages/Employee/EmployeeProfile';
 import ChangePassword from './pages/Employee/ChangePassword';
 
+// Validator Pages - NEW
+import ValidatorOverview from './pages/Validator/ValidatorOverview';
+import ValidatorList from './pages/Validator/ValidatorList';
+import ValidatorDetails from './pages/Validator/ValidatorDetails';
+import SetupValidatorTracking from './pages/Validator/SetupValidatorTracking';
+import RecordManualEarnings from './pages/Validator/RecordManualEarnings';
+import RecordExpenditure from './pages/Validator/RecordExpenditure';
+
 import './App.css';
 
 function AppContent() {
@@ -111,6 +120,14 @@ function AppContent() {
               <Route path="/stock-movements" element={<StockMovementList />} />
               <Route path="/record-stock-movement" element={<RecordStockMovement user={user.walletAddress} />} />
               <Route path="/stock-movements/:id" element={<StockMovementDetails />} />
+
+              {/* Validator Routes - NEW */}
+              <Route path="/validator" element={<ValidatorOverview />} />
+              <Route path="/validator/list" element={<ValidatorList />} />
+              <Route path="/validator/details/:owner" element={<ValidatorDetails />} />
+              <Route path="/validator/setup" element={<SetupValidatorTracking user={user.walletAddress} />} />
+              <Route path="/validator/record-earnings" element={<RecordManualEarnings user={user.walletAddress} />} />
+              <Route path="/validator/record-expenditure" element={<RecordExpenditure user={user.walletAddress} />} />
 
               {/* HR Routes */}
               <Route path="/hr" element={<HRDashboard user={user.walletAddress} />} />

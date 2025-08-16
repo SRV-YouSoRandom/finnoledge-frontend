@@ -1,4 +1,3 @@
-// client/src/services/api.js
 import axios from 'axios';
 
 // REST API base URL
@@ -54,6 +53,10 @@ const api = {
   // HR - User Authentication
   fetchUserAuths: () => axios.get(`${API_URL}/erprollup/hr/user_auth`),
   fetchUserAuth: (id) => axios.get(`${API_URL}/erprollup/hr/user_auth/${id}`),
+  
+  // Validator - NEW ENDPOINTS
+  fetchValidatorInfos: () => axios.get(`${API_URL}/erprollup/validator/validator_info`),
+  fetchValidatorInfo: (owner) => axios.get(`${API_URL}/erprollup/validator/validator_info/${owner}`),
 };
 
 // CLI command endpoints for POST requests
@@ -90,6 +93,11 @@ const cli = {
   
   // HR - Authentication
   changePassword: (data) => axios.post(`${SERVER_URL}/hr/change-password`, data),
+  
+  // Validator - NEW ENDPOINTS
+  setupValidatorTracking: (data) => axios.post(`${SERVER_URL}/validator/setup-tracking`, data),
+  recordManualEarnings: (data) => axios.post(`${SERVER_URL}/validator/manual-earnings`, data),
+  recordExpenditure: (data) => axios.post(`${SERVER_URL}/validator/expenditure`, data),
 };
 
 export { api, cli };

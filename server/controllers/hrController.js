@@ -12,12 +12,12 @@ const submitLeaveRequest = async (req, res) => {
     
     const { employeeId, startDate, endDate, reason, user = 'bob' } = req.body;
     
-    console.log('Extracted values:');
-    console.log('- employeeId:', employeeId, typeof employeeId);
-    console.log('- startDate:', startDate, typeof startDate);
-    console.log('- endDate:', endDate, typeof endDate);
-    console.log('- reason:', reason, typeof reason, 'length:', reason?.length);
-    console.log('- user:', user, typeof user);
+    // console.log('Extracted values:');
+    // console.log('- employeeId:', employeeId, typeof employeeId);
+    // console.log('- startDate:', startDate, typeof startDate);
+    // console.log('- endDate:', endDate, typeof endDate);
+    // console.log('- reason:', reason, typeof reason, 'length:', reason?.length);
+    // console.log('- user:', user, typeof user);
     
     // Validate all required fields
     if (employeeId === undefined || employeeId === null) {
