@@ -1,4 +1,3 @@
-// server/controllers/validatorController.js
 const { executeCommand } = require('../utils/cliExecutor');
 
 /**
@@ -15,9 +14,8 @@ const setupValidatorTracking = async (req, res) => {
       });
     }
     
-    // Construct the CLI command
-    // rollkit tx validator setup-validator-tracking "validatorAddress" "apiUrl" "delegationStr" --from user --chain-id erprollup -y --fees 5stake
-    const command = `rollkit tx validator setup-validator-tracking "${validatorAddress}" "${apiUrl || ''}" "${delegationStr || ''}" --from ${user} --chain-id erprollup -y --fees 5stake`;
+    // FIXED: Use erprollupd instead of rollkit
+    const command = `erprollupd tx validator setup-validator-tracking "${validatorAddress}" "${apiUrl || ''}" "${delegationStr || ''}" --from ${user} --chain-id erprollup -y --fees 5stake`;
     
     console.log('Executing command:', command);
     const result = await executeCommand(command);
@@ -60,8 +58,8 @@ const recordManualEarnings = async (req, res) => {
       });
     }
     
-    // Construct the CLI command
-    const command = `rollkit tx validator record-manual-earnings ${earningsAmount} "${description}" --from ${user} --chain-id erprollup -y --fees 5stake`;
+    // FIXED: Use erprollupd instead of rollkit
+    const command = `erprollupd tx validator record-manual-earnings ${earningsAmount} "${description}" --from ${user} --chain-id erprollup -y --fees 5stake`;
     
     console.log('Executing command:', command);
     const result = await executeCommand(command);
@@ -104,8 +102,8 @@ const recordExpenditure = async (req, res) => {
       });
     }
     
-    // Construct the CLI command
-    const command = `rollkit tx validator record-expenditure ${expenditureAmount} "${description}" --from ${user} --chain-id erprollup -y --fees 5stake`;
+    // FIXED: Use erprollupd instead of rollkit
+    const command = `erprollupd tx validator record-expenditure ${expenditureAmount} "${description}" --from ${user} --chain-id erprollup -y --fees 5stake`;
     
     console.log('Executing command:', command);
     const result = await executeCommand(command);

@@ -1,3 +1,4 @@
+// client/src/pages/Validator/ValidatorDetails.jsx - SIMPLE FIX
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { api } from '../../services/api';
@@ -29,7 +30,22 @@ function ValidatorDetails() {
         setLoading(true);
         const decodedOwner = decodeURIComponent(owner);
         const response = await api.fetchValidatorInfo(decodedOwner);
-        setValidator(response.data.ValidatorInfo);
+        
+        // FIXED: Check both possible response structures
+        let validatorData = null;
+        
+        if (response.data.ValidatorInfo) {
+          // If wrapped in ValidatorInfo object
+          validatorData = response.data.ValidatorInfo;
+        } else if (response.data.validatorInfo) {
+          // If wrapped in validatorInfo object  
+          validatorData = response.data.validatorInfo;
+        } else if (response.data) {
+          // If direct object
+          validatorData = response.data;
+        }
+        
+        setValidator(validatorData);
       } catch (error) {
         console.error('Error fetching validator details:', error);
         setValidator(null);

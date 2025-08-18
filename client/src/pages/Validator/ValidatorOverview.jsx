@@ -1,4 +1,4 @@
-// client/src/pages/Validator/ValidatorOverview.jsx
+// client/src/pages/Validator/ValidatorOverview.jsx - SIMPLE FIX
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../services/api';
@@ -34,7 +34,9 @@ function ValidatorOverview() {
         
         // Fetch all validator tracking information
         const response = await api.fetchValidatorInfos();
-        const validatorData = response.data.ValidatorInfo || [];
+        
+        // FIXED: Use lowercase 'validatorInfo' instead of 'ValidatorInfo'
+        const validatorData = response.data.validatorInfo || [];
         setValidatorInfos(validatorData);
         
         // Process analytics

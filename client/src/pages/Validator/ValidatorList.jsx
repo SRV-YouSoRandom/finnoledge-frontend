@@ -1,3 +1,4 @@
+// client/src/pages/Validator/ValidatorList.jsx - SIMPLE FIX
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../services/api';
@@ -23,7 +24,9 @@ function ValidatorList() {
       try {
         setLoading(true);
         const response = await api.fetchValidatorInfos();
-        setValidators(response.data.ValidatorInfo || []);
+        
+        // FIXED: Use lowercase 'validatorInfo' instead of 'ValidatorInfo'
+        setValidators(response.data.validatorInfo || []);
       } catch (error) {
         console.error('Error fetching validators:', error);
         setValidators([]);

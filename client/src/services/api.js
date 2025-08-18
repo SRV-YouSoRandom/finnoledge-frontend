@@ -1,3 +1,4 @@
+// client/src/services/api.js - SIMPLE FIX for validatorInfo case sensitivity
 import axios from 'axios';
 
 // REST API base URL
@@ -54,7 +55,7 @@ const api = {
   fetchUserAuths: () => axios.get(`${API_URL}/erprollup/hr/user_auth`),
   fetchUserAuth: (id) => axios.get(`${API_URL}/erprollup/hr/user_auth/${id}`),
   
-  // Validator - NEW ENDPOINTS
+  // Validator - FIXED: using lowercase 'validatorInfo'
   fetchValidatorInfos: () => axios.get(`${API_URL}/erprollup/validator/validator_info`),
   fetchValidatorInfo: (owner) => axios.get(`${API_URL}/erprollup/validator/validator_info/${owner}`),
 };
@@ -94,7 +95,7 @@ const cli = {
   // HR - Authentication
   changePassword: (data) => axios.post(`${SERVER_URL}/hr/change-password`, data),
   
-  // Validator - NEW ENDPOINTS
+  // Validator
   setupValidatorTracking: (data) => axios.post(`${SERVER_URL}/validator/setup-tracking`, data),
   recordManualEarnings: (data) => axios.post(`${SERVER_URL}/validator/manual-earnings`, data),
   recordExpenditure: (data) => axios.post(`${SERVER_URL}/validator/expenditure`, data),
